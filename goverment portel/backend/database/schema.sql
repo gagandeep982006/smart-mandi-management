@@ -1,4 +1,3 @@
--- Active: 1791657000005@@mysql-3fbf01d8-gagandeep982006-96c3.l.aivencloud.com@17144@farmer_db
 -- =============================================================================
 -- GOVERNMENT PORTAL DATABASE SCHEMA (farmer_db)
 -- Generated: 2026-10-09T17:58:10.209Z
