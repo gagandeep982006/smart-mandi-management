@@ -1,0 +1,422 @@
+.mandis-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  padding: 24px 32px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #1e293b;
+}
+
+/* Header & Breadcrumb */
+.mandis-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.mandi-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.mandi-breadcrumbs a {
+  color: #64748b;
+  text-decoration: none;
+}
+
+.breadcrumb-arrow {
+  color: #94a3b8;
+}
+
+.breadcrumb-current {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.mandi-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.mandi-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.add-mandi-btn {
+  background-color: #0f5132;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0.15s ease;
+}
+
+.add-mandi-btn:hover {
+  background-color: #0c3e27;
+}
+
+/* Filter Card */
+.mandi-filter-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #eef2f6;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.filter-search-row {
+  display: flex;
+  max-width: 480px;
+}
+
+.mandi-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  padding: 8px 12px;
+}
+
+.search-glyph-inner {
+  color: #64748b;
+  margin-right: 8px;
+}
+
+.mandi-search-input-wrapper input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.mandi-search-submit-btn {
+  background-color: #0f5132;
+  color: #ffffff;
+  border: 1px solid #0f5132;
+  border-radius: 0 8px 8px 0;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mandi-search-submit-btn:hover {
+  background-color: #0c3e27;
+}
+
+.filter-selects-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.mandi-select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.mandi-select-group label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.mandi-select-group select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  font-size: 13px;
+  color: #1e293b;
+  outline: none;
+  cursor: pointer;
+}
+
+.mandi-reset-btn {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+}
+
+.mandi-reset-btn:hover {
+  background-color: #f1f5f9;
+}
+
+/* Metric Cards Grid */
+.mandi-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.metric-card {
+  background-color: #ffffff;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.metric-icon-bubble {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.metric-icon-bubble.green {
+  background-color: #e8f5e9;
+}
+
+.metric-icon-bubble.blue {
+  background-color: #e1f5fe;
+}
+
+.metric-icon-bubble.amber {
+  background-color: #fff3e0;
+}
+
+.metric-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.metric-figure {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* Data Table Card */
+.mandi-table-card {
+  background-color: #ffffff;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.mandi-table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.table-toolbar-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.rows-per-page-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rows-per-page-selector select {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  font-size: 12px;
+  outline: none;
+}
+
+.table-page-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.page-nav-arrow,
+.page-nav-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #334155;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-nav-number.active {
+  background-color: #0f5132;
+  color: #ffffff;
+  border-color: #0f5132;
+}
+
+.page-nav-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Table */
+.mandi-table-scroll-wrapper {
+  overflow-x: auto;
+}
+
+.mandi-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.mandi-data-table th {
+  padding: 12px 14px;
+  color: #475569;
+  font-weight: 600;
+  border-bottom: 1px solid #edf2f7;
+  white-space: nowrap;
+}
+
+.mandi-data-table td {
+  padding: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.th-actions {
+  text-align: right;
+}
+
+.cell-id,
+.cell-name {
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.cell-location {
+  color: #475569;
+}
+
+.loc-arrow {
+  color: #cbd5e1;
+  margin: 0 4px;
+}
+
+.cell-capacity {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+/* Status Pill */
+.status-pill {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-pill.active {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-pill.inactive {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* Row Action Icons */
+.cell-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table-action-icon {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 6px;
+  border-radius: 4px;
+  transition: opacity 0.15s ease;
+}
+
+.table-action-icon:hover {
+  opacity: 0.7;
+}
+
+.empty-table-cell {
+  text-align: center;
+  padding: 32px;
+  color: #94a3b8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .mandi-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .mandis-page-container {
+    padding: 16px;
+  }
+  .mandi-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  .filter-selects-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

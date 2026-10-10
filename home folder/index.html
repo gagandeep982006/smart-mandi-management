@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>National Agricultural Procurement Portal Hub | Gateway</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-dark: #172554;
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+    .top-tricolor {
+      height: 5px;
+      background: linear-gradient(90deg, #ff9933 33.33%, #ffffff 33.33%, #ffffff 66.66%, #138808 66.66%);
+      width: 100%;
+    }
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 1.5rem; }
+    .header-wrapper {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 50;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 0;
+    }
+    .brand-section { display: flex; align-items: center; gap: 1rem; }
+    .brand-emblem {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; box-shadow: 0 4px 10px rgba(30, 58, 138, 0.25);
+    }
+    .brand-titles h1 { font-size: 1.2rem; font-weight: 800; color: var(--primary-dark); }
+    .brand-titles p { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; }
+    .hero-section {
+      padding: 3.5rem 0 2.5rem; text-align: center;
+      background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+    }
+    .hero-pill {
+      display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.9rem;
+      background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 9999px;
+      font-size: 0.825rem; font-weight: 600; color: #1d4ed8; margin-bottom: 1.25rem;
+    }
+    .hero-title {
+      font-size: 2.75rem; font-weight: 800; color: #0f172a; margin-bottom: 0.75rem; line-height: 1.2;
+    }
+    .hero-title span {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #059669 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-desc {
+      max-width: 720px; margin: 0 auto 2rem; font-size: 1.05rem; color: var(--text-muted); line-height: 1.6;
+    }
+    .search-box {
+      max-width: 520px; margin: 0 auto 1.5rem; position: relative;
+    }
+    .search-box input {
+      width: 100%; padding: 0.8rem 1rem 0.8rem 2.8rem; border-radius: 9999px;
+      border: 1px solid var(--border); background: white; font-size: 0.92rem; outline: none;
+      box-shadow: var(--shadow-sm);
+    }
+    .search-icon {
+      position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 1rem; opacity: 0.5;
+    }
+    .filter-bar {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2.5rem;
+    }
+    .filter-btn {
+      padding: 0.5rem 1.1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--border); background: white; color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+    .filter-btn:hover { background: #f1f5f9; color: var(--text-main); }
+    .filter-btn.active {
+      background: var(--primary); color: white; border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+    }
+    .portals-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.75rem; margin-bottom: 4rem;
+    }
+    .portal-card {
+      background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border);
+      padding: 1.75rem; display: flex; flex-direction: column; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative; box-shadow: var(--shadow-sm); overflow: hidden;
+    }
+    .portal-card:hover {
+      transform: translateY(-4px); box-shadow: var(--shadow-xl);
+    }
+    .card-header {
+      display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem;
+    }
+    .card-icon-wrap {
+      width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+      font-size: 1.75rem;
+    }
+    .port-pill {
+      font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 6px; font-family: monospace;
+    }
+    .card-role-tag {
+      display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; padding: 0.2rem 0.55rem; border-radius: 4px; margin-bottom: 0.5rem;
+    }
+    .card-title {
+      font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem;
+    }
+    .card-subtitle {
+      font-size: 0.8rem; font-weight: 600; margin-bottom: 0.75rem;
+    }
+    .card-desc {
+      font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.25rem; flex-grow: 1;
+    }
+    .features-list {
+      list-style: none; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .features-list li {
+      font-size: 0.825rem; color: #334155; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .card-audience {
+      font-size: 0.78rem; color: #64748b; margin-bottom: 1.25rem; padding: 0.6rem 0.8rem;
+      background: #f8fafc; border-radius: 8px;
+    }
+    .card-action-btn {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%;
+      padding: 0.85rem 1.25rem; border-radius: var(--radius-md); font-weight: 700; font-size: 0.95rem;
+      text-decoration: none; color: white; transition: all 0.2s ease; border: none; cursor: pointer;
+    }
+    .card-action-btn:hover {
+      filter: brightness(1.1); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+    .config-btn {
+      padding: 0.45rem 0.9rem; border-radius: 8px; border: 1px solid var(--border); background: white;
+      cursor: pointer; font-weight: 600; font-size: 0.8rem; display: flex; align-items: center; gap: 0.4rem;
+    }
+    .config-btn:hover { background: #f1f5f9; }
+    .flow-section {
+      background: white; border-radius: var(--radius-lg); border: 1px solid var(--border);
+      padding: 2.5rem; margin-bottom: 4rem; box-shadow: var(--shadow-sm);
+    }
+    .flow-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.5rem;
+    }
+    .flow-step-card {
+      padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid #f1f5f9; background: #f8fafc;
+      display: flex; flex-direction: column; gap: 0.75rem;
+    }
+    .flow-step-num {
+      width: 32px; height: 32px; border-radius: 8px; color: white; display: flex; align-items: center;
+      justify-content: center; font-weight: 800; font-size: 0.85rem;
+    }
+    .footer-wrap {
+      background: white; border-top: 1px solid var(--border); padding: 2.5rem 0; margin-top: auto;
+      text-align: center;
+    }
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center; z-index: 100; padding: 1.5rem;
+    }
+    .modal-content {
+      background: white; border-radius: var(--radius-lg); max-width: 520px; width: 100%;
+      padding: 2rem; box-shadow: var(--shadow-xl); border: 1px solid var(--border);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;
+    }
+    .modal-header h3 { font-size: 1.25rem; font-weight: 800; }
+    .modal-close { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #64748b; }
+    .modal-field { margin-bottom: 1rem; }
+    .modal-field label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.35rem; color: #334155; }
+    .modal-field input {
+      width: 100%; padding: 0.65rem 0.9rem; border-radius: 8px; border: 1px solid var(--border);
+      font-size: 0.875rem; font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-tricolor"></div>
+
+  <header class="header-wrapper">
+    <div class="container header-inner">
+      <div class="brand-section">
+        <div class="brand-emblem">🏛️</div>
+        <div class="brand-titles">
+          <h1>राष्ट्रीय कृषि खरीद पोर्टल हब</h1>
+          <p>National Agricultural Procurement Unified Gateway • Government of India</p>
+        </div>
+      </div>
+      <div>
+        <button class="config-btn" onclick="openConfigModal()">⚙️ Configure Ports</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-pill">🛡️ Secure Unified Procurement Infrastructure</div>
+      <h1 class="hero-title">One Gateway. <span>Four Powerful Portals.</span></h1>
+      <p class="hero-desc">
+        Seamlessly navigate between Government Administration, Yard Weighbridge Operations, 
+        Farmer Self-Service, and State Payment Disbursements in the unified agricultural procurement ecosystem.
+      </p>
+
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Search by role, feature, keyword (e.g. quota, weighbridge, dbt, token)..."
+          oninput="handleSearch()"
+        />
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="setFilter('all', this)">⚡ All Portals (4)</button>
+        <button class="filter-btn" onclick="setFilter('farmer', this)">🌾 Farmer Portal</button>
+        <button class="filter-btn" onclick="setFilter('mandi', this)">🏢 Mandi Portal</button>
+        <button class="filter-btn" onclick="setFilter('gov', this)">🏛️ Government Portal</button>
+        <button class="filter-btn" onclick="setFilter('payment', this)">💳 Payment Portal</button>
+      </div>
+    </div>
+  </section>
+
+  <main class="container">
+    <div class="portals-grid" id="portalsGrid">
+      <!-- Portals rendered dynamically via JS -->
+    </div>
+
+    <section class="flow-section">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem;">Procurement Lifecycle Architecture</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">How the four portals cooperate seamlessly across physical and financial operations</p>
+      </div>
+
+      <div class="flow-step-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 1px solid #bbf7d0;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span style="font-size: 1.5rem;">🔒</span>
+          <div>
+            <h4 style="font-weight: 800; font-size: 0.95rem; color: #15803d;">Enterprise Security Architecture Across All 4 Portals</h4>
+            <p style="font-size: 0.825rem; color: #166534; margin-top: 2px;">
+              All portals share unified server-side in-memory JavaScript Map abuse protection (5-minute OTP cooldown, failed attempt lockout, generic security responses) alongside HttpOnly JWT authentication and cryptographic HMAC-SHA256 Aadhaar hashing.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-grid">
+        <div class="flow-step-card">
+          <div class="flow-step-num" style="background: #1e40af;">1</div>
+          <h4 style="font-weight: 700;">Government Setup</h4>
+          <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">
+            Admins configure Mandis, assign procurement crops, set MSP rates, define seasonal quotas, and provision field officers.
+          </p>
+        </div>
+        <div class="flow-step-card">
+          <div class="flow-step-num" style="background: #16a34a;">2</div>
+          <h4 style="font-weight: 700;">Farmer Slot Booking</h4>
+          <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">
+            Farmers log in using Aadhaar/Phone OTP, select available mandi counters, book procurement slots, and receive queue tokens.
+          </p>
+        </div>
+        <div class="flow-step-card">
+          <div class="flow-step-num" style="background: #d97706;">3</div>
+          <h4 style="font-weight: 700;">Mandi Yard Weighing</h4>
+          <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">
+            Operators call arrival tokens, inspect grain quality, weigh bags at assigned counters, and generate completion vouchers.
+          </p>
+        </div>
+        <div class="flow-step-card">
+          <div class="flow-step-num" style="background: #7c3aed;">4</div>
+          <h4 style="font-weight: 700;">Payment Disbursement</h4>
+          <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">
+            Finance officers inspect procurement proofs via MySQL read views and authorize direct bank account transfers for farmers.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="configModal" onclick="closeConfigModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Configure Portal URLs & Ports</h3>
+        <button class="modal-close" onclick="closeConfigModal()">&times;</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Modify the target URLs if your services run on custom ports, Docker containers, or remote network hosts:
+      </p>
+      <div id="modalFields"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
+        <button onclick="resetDefaults()" style="background: none; border: 1px solid var(--border); padding: 0.6rem 1rem; border-radius: 8px; cursor: pointer; color: #64748b; font-size: 0.825rem;">Reset Defaults</button>
+        <div style="display: flex; gap: 0.75rem;">
+          <button onclick="closeConfigModal()" style="background: #f1f5f9; border: none; padding: 0.6rem 1.1rem; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancel</button>
+          <button onclick="saveConfigModal()" style="background: var(--primary); border: none; padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: 700; color: white; cursor: pointer;">Save Configuration</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer-wrap">
+    <div class="container">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+        <span style="font-size: 1.25rem;">🌾</span>
+        <strong style="color: #0f172a;">National Agricultural Procurement Ecosystem</strong>
+      </div>
+      <p style="font-size: 0.825rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+        Ministry of Agriculture & Farmers Welfare • Food, Civil Supplies & Consumer Affairs Department
+      </p>
+      <div style="font-size: 0.75rem; color: #94a3b8;">
+        Direct Links: Mandi (3000) • Government (3001) • Farmer (3002) • Payment (3004) • Gateway Hub (3005)
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const PORTALS_DATA = [
+      {
+        id: 'farmer',
+        name: 'Farmer Portal',
+        hindiName: 'किसान पोर्टल',
+        category: 'farmer',
+        roleTag: 'Farmer Self-Service',
+        defaultPort: 3002,
+        defaultUrl: 'http://localhost:3002',
+        icon: '🌾',
+        themeColor: '#16a34a',
+        accentBg: '#dcfce7',
+        badgeColor: '#15803d',
+        description: 'Self-service portal for registered farmers to book crop selling appointments, track queue tokens, and view payment vouchers.',
+        features: [
+          'Aadhaar & Mobile OTP authentication',
+          'Seasonal crop slot & counter appointment booking',
+          'Digital token pass with real-time queue position',
+          '30-minute anti-hoarding booking cancellation lock',
+          'Land parcel quotas & bank account status inspection'
+        ],
+        audience: 'Registered Farmers, Land Cultivators & Agricultural Producers'
+      },
+      {
+        id: 'mandi',
+        name: 'Mandi Portal',
+        hindiName: 'मंडी संचालन पोर्टल',
+        category: 'mandi',
+        roleTag: 'Mandi Operations',
+        defaultPort: 3000,
+        defaultUrl: 'http://localhost:3000',
+        icon: '🏢',
+        themeColor: '#d97706',
+        accentBg: '#fef3c7',
+        badgeColor: '#b45309',
+        description: 'Operational counter and yard management system for Mandi staff to call tokens, record net weights, and process grain procurement.',
+        features: [
+          'Phone OTP authentication with 4-tier PBAC',
+          'Live counter queue management & arrival calling',
+          'Weighbridge capture & automatic MSP calculations',
+          '7-day delayed effective scheduling for hours & days',
+          'Immediate payment record generation upon completion'
+        ],
+        audience: 'Mandi Staff, Weighbridge Operators & Yard Officers'
+      },
+      {
+        id: 'gov',
+        name: 'Government Portal',
+        hindiName: 'सरकारी प्रशासन पोर्टल',
+        category: 'gov',
+        roleTag: 'Administration & Policy',
+        defaultPort: 3001,
+        defaultUrl: 'http://localhost:3001',
+        icon: '🏛️',
+        themeColor: '#1e40af',
+        accentBg: '#dbeafe',
+        badgeColor: '#1e3a8a',
+        description: 'Centralized administrative engine for three-tier location hierarchy, officer onboarding, crop price setup, and quota enforcement.',
+        features: [
+          '3-Tier Jurisdictional Scoping (State → District → Tehsil)',
+          'Role & Permission-Based Access Control (RBAC & PBAC)',
+          'Mandi yard, weighing counter & crop procurement setup',
+          'Aadhaar blind index security (HMAC-SHA256 & bcrypt)',
+          'User management for Mandi, Payment & Nodal officers'
+        ],
+        audience: 'System Administrators, State/District/Tehsil Nodal Officers'
+      },
+      {
+        id: 'payment',
+        name: 'Payment Portal',
+        hindiName: 'भुगतान संवितरण पोर्टल',
+        category: 'payment',
+        roleTag: 'Finance & DBT',
+        defaultPort: 3004,
+        defaultUrl: 'http://localhost:3004',
+        icon: '💳',
+        themeColor: '#7c3aed',
+        accentBg: '#ede9fe',
+        badgeColor: '#6d28d9',
+        description: 'State-isolated payment disbursement management system to verify beneficiary details and execute MSP bank transfers.',
+        features: [
+          'State-isolated disbursement ledger & approval workflow',
+          'Atomic status transitions (Pending → Processing → Paid)',
+          'Optimized MySQL read views (vw_payment_details)',
+          'Farmer beneficiary bank verification & proof capture',
+          'Non-blocking MongoDB financial audit logging'
+        ],
+        audience: 'State Finance Officers & Payment Disbursement Approvers'
+      }
+    ];
+
+    let currentFilter = 'all';
+    let currentSearch = '';
+
+    function getSavedUrls() {
+      try {
+        const saved = localStorage.getItem('hub_portal_configs');
+        return saved ? JSON.parse(saved) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function renderPortals() {
+      const savedUrls = getSavedUrls();
+      const grid = document.getElementById('portalsGrid');
+      grid.innerHTML = '';
+
+      const filtered = PORTALS_DATA.filter(p => {
+        const matchesFilter = currentFilter === 'all' || p.category === currentFilter;
+        const term = currentSearch.toLowerCase().trim();
+        const matchesSearch = !term ||
+          p.name.toLowerCase().includes(term) ||
+          p.hindiName.includes(term) ||
+          p.roleTag.toLowerCase().includes(term) ||
+          p.description.toLowerCase().includes(term) ||
+          p.features.some(f => f.toLowerCase().includes(term));
+        return matchesFilter && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: white; border-radius: 18px; border: 1px solid var(--border);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.25rem;">No matching portals found</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Try adjusting your search query or switching filter tabs.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(portal => {
+        const url = savedUrls[portal.id] || portal.defaultUrl;
+        const card = document.createElement('div');
+        card.className = 'portal-card';
+        card.style.borderTop = `4px solid ${portal.themeColor}`;
+
+        card.innerHTML = `
+          <div class="card-header">
+            <div class="card-icon-wrap" style="background: ${portal.accentBg}; color: ${portal.themeColor};">
+              ${portal.icon}
+            </div>
+            <div class="port-pill" style="background: ${portal.accentBg}; color: ${portal.badgeColor};">
+              PORT ${portal.defaultPort}
+            </div>
+          </div>
+          <div class="card-role-tag" style="background: ${portal.accentBg}; color: ${portal.badgeColor};">
+            ${portal.roleTag}
+          </div>
+          <h3 class="card-title">${portal.name}</h3>
+          <div class="card-subtitle" style="color: ${portal.themeColor};">${portal.hindiName}</div>
+          <p class="card-desc">${portal.description}</p>
+          <div style="margin-bottom: 1.25rem;">
+            <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 0.5rem;">Key Capabilities:</div>
+            <ul class="features-list">
+              ${portal.features.map(f => `<li><span style="color: ${portal.themeColor}; font-weight: bold;">✓</span> <span>${f}</span></li>`).join('')}
+            </ul>
+          </div>
+          <div class="card-audience">
+            <strong>Audience:</strong> ${portal.audience}
+          </div>
+          <a href="${url}" target="_blank" rel="noopener noreferrer" class="card-action-btn" style="background: ${portal.themeColor};">
+            <span>Launch ${portal.name}</span> <span>➔</span>
+          </a>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function setFilter(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderPortals();
+    }
+
+    function handleSearch() {
+      currentSearch = document.getElementById('searchInput').value;
+      renderPortals();
+    }
+
+    function openConfigModal() {
+      const savedUrls = getSavedUrls();
+      const fieldsContainer = document.getElementById('modalFields');
+      fieldsContainer.innerHTML = '';
+      PORTALS_DATA.forEach(p => {
+        const url = savedUrls[p.id] || p.defaultUrl;
+        fieldsContainer.innerHTML += `
+          <div class="modal-field">
+            <label>${p.name} (Default: Port ${p.defaultPort})</label>
+            <input type="text" id="cfg_${p.id}" value="${url}" />
+          </div>
+        `;
+      });
+      document.getElementById('configModal').style.display = 'flex';
+    }
+
+    function closeConfigModal(e) {
+      if (!e || e.target.id === 'configModal' || e.target.classList.contains('modal-close')) {
+        document.getElementById('configModal').style.display = 'none';
+      }
+    }
+
+    function saveConfigModal() {
+      const config = {};
+      PORTALS_DATA.forEach(p => {
+        const val = document.getElementById('cfg_' + p.id).value.trim();
+        config[p.id] = val || p.defaultUrl;
+      });
+      localStorage.setItem('hub_portal_configs', JSON.stringify(config));
+      document.getElementById('configModal').style.display = 'none';
+      renderPortals();
+    }
+
+    function resetDefaults() {
+      PORTALS_DATA.forEach(p => {
+        const el = document.getElementById('cfg_' + p.id);
+        if (el) el.value = p.defaultUrl;
+      });
+    }
+
+    // Initialize
+    renderPortals();
+  </script>
+</body>
+</html>

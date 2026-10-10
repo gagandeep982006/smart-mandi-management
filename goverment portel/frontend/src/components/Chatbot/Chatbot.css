@@ -1,0 +1,663 @@
+/* 1. Lock the root page so it never scrolls */
+.agri-chat-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: #f0fdf4;
+  height: 100vh;           /* Fixed viewport height */
+  max-height: 100vh;
+  padding: 16px 28px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #1e293b;
+  overflow: hidden;        /* Prevents full page scroll */
+}
+
+/* 2. Top Header Bar */
+.chat-header-bar {
+  flex-shrink: 0;          /* Never allow header to shrink */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 12px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.chat-brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.chat-logo-icon {
+  width: 42px;
+  height: 42px;
+  background-color: #0f5132;
+  color: #ffffff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.brand-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-title-row h1 {
+  font-size: 19px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.bot-status-tag {
+  background-color: #dcfce7;
+  color: #15803d;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.brand-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+.chat-top-banner {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #166534;
+}
+
+.banner-sprout-icon {
+  font-size: 14px;
+}
+
+/* 3. Main Grid Layout constrained to remaining screen height */
+.chat-layout-container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 16px;
+  min-height: 0;           /* Crucial: allows flex/grid children to shrink */
+  overflow: hidden;
+}
+
+/* 4. Left Column: Chat Container */
+.chat-conversation-panel {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;            /* Fills remaining container exactly */
+  min-height: 0;           /* Prevents internal content from pushing parent height */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+}
+
+/* 5. ONLY THIS AREA SCROLLS */
+.chat-messages-scroll-area {
+  flex: 1;
+  overflow-y: auto;        /* Chatbox slider moves here */
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+}
+
+/* Custom sleek scrollbar for the messages area */
+.chat-messages-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages-scroll-area::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.chat-messages-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Message Rows */
+.chat-message-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 90%;
+}
+
+.chat-message-row.bot {
+  align-self: flex-start;
+}
+
+.chat-message-row.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.bot-avatar-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e0f2fe 0%, #bbf7d0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  border: 1px solid #cbd5e1;
+}
+
+.user-avatar-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.message-bubble-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.message-bubble {
+  padding: 12px 18px;
+  border-radius: 16px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.message-bubble.bot {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  border-top-left-radius: 4px;
+}
+
+.message-bubble.user {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  border-top-right-radius: 4px;
+  text-align: right;
+}
+
+.message-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.message-time {
+  display: block;
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+/* Quick Options Grid */
+.bot-options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.options-heading-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.options-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.btn-open-flowchart {
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-open-flowchart:hover {
+  background-color: #dcfce7;
+}
+
+.quick-topics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.topic-card-btn {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.topic-card-btn:hover,
+.topic-card-btn.active {
+  border-color: #0f5132;
+  background-color: #f0fdf4;
+}
+
+.topic-icon {
+  font-size: 15px;
+}
+
+.topic-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  flex: 1;
+}
+
+.topic-arrow {
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.category-questions-pop {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pop-title {
+  font-size: 12px;
+  color: #475569;
+}
+
+.pop-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pop-q-btn {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pop-q-btn:hover {
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+/* 6. Pinned Bottom Input Bar */
+.chat-bottom-input-bar {
+  flex-shrink: 0;          /* Never squish input bar */
+  padding: 12px 20px;
+  border-top: 1px solid #f1f5f9;
+  background-color: #ffffff;
+}
+
+.input-field-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 5px 12px;
+}
+
+.input-field-container:focus-within {
+  border-color: #0f5132;
+  box-shadow: 0 0 0 2px rgba(15, 81, 50, 0.1);
+}
+
+.input-tool-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.input-tool-btn:hover {
+  color: #0f172a;
+}
+
+.input-field-container input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13.5px;
+  color: #0f172a;
+  background: transparent;
+}
+
+.send-message-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background-color: #0f5132;
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.send-message-btn:hover:not(:disabled) {
+  background-color: #0c3e27;
+}
+
+.send-message-btn:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.input-helper-tip {
+  font-size: 10.5px;
+  color: #94a3b8;
+  margin: 4px 0 0 4px;
+}
+
+/* 7. Right Sidebar: Scroll internally if screen height is small */
+.chat-sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;        /* Allows right sidebar to scroll internally if screen is small */
+  padding-right: 2px;
+}
+
+.chat-sidebar-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-sidebar-panel::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.popular-questions-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  flex-shrink: 0;
+}
+
+.popular-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.header-bulb-icon {
+  font-size: 17px;
+}
+
+.popular-card-header h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.popular-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popular-q-item {
+  background-color: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11.5px;
+  color: #334155;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.popular-q-item:hover {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #0f5132;
+}
+
+.q-arrow {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* Flowchart CTA */
+.flowchart-cta-card {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.flowchart-cta-card:hover {
+  transform: translateY(-1px);
+}
+
+.cta-icon-box {
+  width: 32px;
+  height: 32px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.cta-details h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e40af;
+  margin: 0;
+}
+
+.cta-details p {
+  font-size: 10.5px;
+  color: #3b82f6;
+  margin: 2px 0 0 0;
+}
+
+.cta-arrow {
+  font-size: 15px;
+  color: #2563eb;
+  margin-left: auto;
+}
+
+/* Mission Quote */
+.mission-quote-card {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #a7f3d0;
+  border-radius: 16px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mission-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.mission-leaf-bubble {
+  width: 32px;
+  height: 32px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.mission-text-group h3 {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #065f46;
+  margin: 0;
+}
+
+.mission-text-group p {
+  font-size: 10.5px;
+  color: #047857;
+  margin: 2px 0 0 0;
+}
+
+/* Lightbox Modal */
+.flowchart-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.flowchart-modal-content {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.flowchart-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.flowchart-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flowchart-title h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.close-flowchart-btn {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.flowchart-image-wrap {
+  padding: 20px;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.flowchart-image-wrap img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}

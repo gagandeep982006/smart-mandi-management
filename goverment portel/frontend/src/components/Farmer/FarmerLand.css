@@ -1,0 +1,805 @@
+/* Container */
+.farmer-land-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  padding: 24px 32px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #1e293b;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Header & Breadcrumb */
+.farmer-land-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.fl-breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.fl-breadcrumbs a {
+  text-decoration: none;
+  color: #64748b;
+}
+
+.fl-breadcrumbs .sep {
+  color: #94a3b8;
+}
+
+.fl-breadcrumbs .current {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.fl-title {
+  font-size: clamp(20px, 2.5vw, 26px);
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+}
+
+.fl-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Base Card */
+.fl-card {
+  background-color: #ffffff;
+  border: 1px solid #eef2f6;
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
+  min-width: 0; /* Prevents card from forcing parent horizontal scroll */
+}
+
+/* Top Two Cards Grid */
+.fl-top-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+/* Farmer Details Card */
+.farmer-details-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.farmer-avatar-bubble {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #e0f2fe;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.farmer-info-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.farmer-info-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.farmer-info-row.secondary-two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.farmer-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.info-label {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.info-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.info-val.highlight {
+  color: #0369a1;
+}
+
+.info-val-sub {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  word-break: break-word;
+}
+
+/* Holding Summary Card */
+.holding-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.holding-main-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 10px 16px;
+}
+
+.holding-icon-bubble {
+  font-size: 24px;
+}
+
+.holding-label {
+  font-size: 11px;
+  color: #166534;
+  display: block;
+}
+
+.holding-number {
+  font-size: clamp(17px, 2vw, 20px);
+  font-weight: 800;
+  color: #14532d;
+}
+
+.holding-sub-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.holding-sub-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.holding-sub-box.verified {
+  background-color: #f0fdf4;
+  border: 1px solid #dcfce7;
+  color: #15803d;
+}
+
+.holding-sub-box.pending {
+  background-color: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #b45309;
+}
+
+.holding-sub-box.rejected {
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+  color: #b91c1c;
+}
+
+.sub-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.sub-label {
+  font-size: 10px;
+  display: block;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.sub-val {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Main Grid Layout */
+.fl-main-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  width: 100%;
+}
+
+.fl-right-col {
+  min-width: 0; /* Critical: lets right column shrink without causing scroll */
+  width: 100%;
+}
+
+.card-top-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.heading-icon {
+  font-size: 18px;
+}
+
+.card-top-heading h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* Form Styles */
+.fl-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-fields-two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fl-field label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.fl-field .req {
+  color: #e11d48;
+}
+
+.fl-field input,
+.fl-field select {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.fl-field input:focus,
+.fl-field select:focus {
+  border-color: #0f5132;
+  box-shadow: 0 0 0 1px #0f5132;
+}
+
+.form-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.fl-btn-reset {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fl-btn-reset:hover {
+  background-color: #f1f5f9;
+}
+
+.fl-btn-submit {
+  background-color: #0f5132;
+  border: none;
+  color: #ffffff;
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fl-btn-submit:hover {
+  background-color: #0c3e27;
+}
+
+.fl-info-callout {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.callout-icon {
+  font-size: 14px;
+  color: #1d4ed8;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.fl-info-callout p {
+  font-size: 12px;
+  color: #1e40af;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Existing Land Records Table */
+.fl-table-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+}
+
+/* Minimal Custom Scrollbar inside Table Card Only */
+.fl-table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.fl-table-responsive::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.fl-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+  min-width: 620px; /* Forces scroll strictly inside wrapper on small devices */
+}
+
+.fl-data-table th {
+  padding: 10px 12px;
+  color: #64748b;
+  font-weight: 600;
+  border-bottom: 1px solid #edf2f7;
+  white-space: nowrap;
+}
+
+.fl-data-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f8fafc;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.cell-area {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.cell-date {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.status-pill {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.status-pill.verified,
+.status-pill.pill-active {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.status-pill.pending,
+.status-pill.pill-inactive {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.status-pill.rejected,
+.status-pill.pill-suspended {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.th-actions,
+.cell-actions {
+  text-align: right;
+}
+
+.fl-action-btn.delete {
+  background: transparent;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+.fl-action-btn.delete:hover {
+  background-color: #fef2f2;
+}
+
+.empty-cell {
+  text-align: center;
+  padding: 32px;
+  color: #94a3b8;
+}
+
+/* Bottom Land Summary Section */
+.land-summary-section {
+  margin-top: 24px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+}
+
+.summary-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.summary-icon {
+  font-size: 16px;
+}
+
+.summary-title-row h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.summary-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summary-metric-box {
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.summary-metric-box.blue {
+  background-color: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #1d4ed8;
+}
+
+.summary-metric-box.green {
+  background-color: #f0fdf4;
+  border: 1px solid #dcfce7;
+  color: #15803d;
+}
+
+.summary-metric-box.light-green {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.summary-metric-box.amber {
+  background-color: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #b45309;
+}
+
+.sum-label {
+  font-size: 11px;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.sum-val {
+  font-size: clamp(15px, 1.8vw, 18px);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Alert Banner */
+.top-global-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.top-global-alert.alert-success {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.top-global-alert.alert-error {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* Modal Styles */
+.fl-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.fl-modal-box {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+}
+
+.fl-modal-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.fl-modal-box h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.fl-modal-box p {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 18px 0;
+}
+
+.fl-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.fl-btn-danger {
+  background-color: #dc2626;
+  color: #ffffff;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.fl-btn-cancel {
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Responsive Breakpoints
+   ========================================================================== */
+
+/* Tablets / Medium Desktops */
+@media (max-width: 1024px) {
+  .fl-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fl-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Smaller Tablets / Large Phones */
+@media (max-width: 768px) {
+  .farmer-land-container {
+    padding: 20px 16px;
+    gap: 16px;
+  }
+
+  .farmer-details-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .farmer-info-row {
+    grid-template-columns: 1fr;
+  }
+
+  .farmer-info-row.secondary-two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .holding-sub-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .form-fields-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Small Mobile Screens */
+@media (max-width: 480px) {
+  .farmer-land-container {
+    padding: 16px 12px;
+  }
+
+  .fl-card {
+    padding: 16px;
+  }
+
+  .summary-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions-row {
+    flex-direction: column;
+  }
+
+  .fl-btn-reset,
+  .fl-btn-submit {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Action edit button in table */
+.fl-action-btn.edit {
+  background: transparent;
+  border: 1px solid #fed7aa;
+  color: #ea580c;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-right: 6px;
+  transition: all 0.15s ease;
+}
+
+.fl-action-btn.edit:hover {
+  background-color: #fff7ed;
+}
+
+/* Edit Status Modal styles */
+.fl-modal-box.edit-status-box {
+  text-align: left;
+}
+
+.fl-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.fl-modal-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.close-x-btn {
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.status-modal-meta {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 12px;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  color: #475569;
+}
+
+.meta-row strong {
+  color: #0f172a;
+}
+
+.edit-status-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}

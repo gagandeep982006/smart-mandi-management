@@ -1,0 +1,552 @@
+.view-users-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  padding: 28px 40px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #1e293b;
+}
+
+/* Header Row */
+.vu-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vu-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.vu-btn-add-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #1668e3;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.vu-btn-add-user:hover {
+  background-color: #0f56c7;
+}
+
+.plus-sign {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Search Bar */
+.vu-search-container {
+  position: relative;
+  width: 100%;
+}
+
+.vu-search-container .search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.vu-search-container input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px 0 42px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background-color: #ffffff;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.vu-search-container input:focus {
+  border-color: #1668e3;
+  box-shadow: 0 0 0 2px rgba(22, 104, 227, 0.1);
+}
+
+/* Filter Row */
+.vu-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 140px;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-item label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.filter-item select {
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  font-size: 13.5px;
+  color: #334155;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.filter-item select:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.vu-btn-show {
+  width: 100%;
+  height: 42px;
+  background-color: #1668e3;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.vu-btn-show:hover {
+  background-color: #0f56c7;
+}
+
+/* Table Card */
+.vu-table-card {
+  background-color: #ffffff;
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+}
+
+.vu-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.vu-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13.5px;
+}
+
+.vu-data-table thead tr {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.vu-data-table th {
+  padding: 16px 20px;
+  color: #475569;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.vu-data-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f8fafc;
+  color: #334155;
+}
+
+.vu-data-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.cell-id {
+  font-weight: 600;
+  color: #475569;
+}
+
+.cell-username {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.cell-location {
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* Badges */
+.vu-role-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+/* Clickable Status Pill */
+.vu-status-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.vu-status-pill:hover {
+  opacity: 0.85;
+}
+
+.vu-status-pill.active {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.vu-status-pill.inactive {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+/* Actions */
+.cell-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.vu-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.vu-action-btn.edit {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+.vu-action-btn.edit:hover {
+  background-color: #dbeafe;
+}
+
+.vu-action-btn.delete {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+.vu-action-btn.delete:hover {
+  background-color: #fee2e2;
+}
+
+.vu-empty-cell {
+  text-align: center;
+  padding: 48px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* Pagination Footer */
+.vu-footer-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.vu-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vu-page-nav,
+.vu-page-number {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vu-page-number.active {
+  background-color: #1668e3;
+  border-color: #1668e3;
+  color: #ffffff;
+}
+
+.vu-page-nav:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Delete Confirmation Modal */
+.vu-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.vu-modal-box {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.vu-modal-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.vu-modal-box h3 {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 8px 0;
+}
+
+.vu-modal-box p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.vu-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.vu-modal-actions .btn-danger {
+  background-color: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vu-modal-actions .btn-secondary {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .vu-filters-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .view-users-page {
+    padding: 16px;
+  }
+  .vu-filters-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Status Modal Styling */
+.vu-modal-box.edit-status-box {
+  max-width: 380px;
+}
+
+.modal-subtext {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 0 0 18px 0;
+}
+
+.status-selector-group {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.status-option-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.status-option-label input {
+  display: none;
+}
+
+.status-option-label .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-option-label .dot.active {
+  background-color: #16a34a;
+}
+
+.status-option-label .dot.inactive {
+  background-color: #ef4444;
+}
+
+.status-option-label.selected.active {
+  border-color: #16a34a;
+  background-color: #f0fdf4;
+  color: #166534;
+}
+
+.status-option-label.selected.inactive {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+  color: #991b1b;
+}
+
+.vu-modal-actions .btn-primary {
+  background-color: #1668e3;
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.vu-modal-actions .btn-primary:hover:not(:disabled) {
+  background-color: #0f56c7;
+}
+
+.vu-modal-actions .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Search clear button */
+.vu-search-clear {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.vu-search-clear:hover {
+  color: #0f172a;
+}
+
+/* Filter action buttons group */
+.filter-action-group {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.vu-btn-reset {
+  height: 42px;
+  padding: 0 16px;
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vu-btn-reset:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Direct single user query banner */
+.vu-single-user-banner {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vu-single-user-banner button {
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 13px;
+  text-decoration: underline;
+}
