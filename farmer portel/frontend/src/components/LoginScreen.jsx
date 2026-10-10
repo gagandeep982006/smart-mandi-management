@@ -59,6 +59,10 @@ export default function LoginScreen({ onLoginSuccess }) {
         setStep(2);
         setTimer(300);
         setSuccessMsg(res.message || 'OTP has been dispatched to your mobile number.');
+        const mockOtp = res.otp || res.mock_otp || res.data?.otp;
+        if (mockOtp) {
+          setOtp(String(mockOtp));
+        }
       } else {
         setError(res.message || 'Failed to request OTP');
       }

@@ -64,7 +64,12 @@ export default function LoginPage() {
                 setStep(2);
                 setTimer(300);
                 setCanResend(false);
-                setOtp("");
+                const mockOtp = res.otp || res.mock_otp || res.data?.otp;
+                if (mockOtp) {
+                    setOtp(String(mockOtp));
+                } else {
+                    setOtp("");
+                }
             } else {
                 setError(res?.message || "Failed to send OTP. Please verify your registered number.");
             }
@@ -109,7 +114,12 @@ export default function LoginPage() {
             if (res && res.success) {
                 setTimer(300);
                 setCanResend(false);
-                setOtp("");
+                const mockOtp = res.otp || res.mock_otp || res.data?.otp;
+                if (mockOtp) {
+                    setOtp(String(mockOtp));
+                } else {
+                    setOtp("");
+                }
             } else {
                 setError(res?.message || "Failed to resend OTP");
             }

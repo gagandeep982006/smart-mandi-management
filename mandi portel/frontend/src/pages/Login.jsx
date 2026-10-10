@@ -50,6 +50,10 @@ export default function Login() {
                 setStep(2);
                 setTimer(300);
                 setCanResend(false);
+                const mockOtp = res.otp || res.mock_otp || res.data?.otp;
+                if (mockOtp) {
+                    setOtp(String(mockOtp));
+                }
                 toast.success(res.message || "OTP sent to your registered mobile number");
             } else {
                 setError(res?.message || "Failed to request OTP. Please verify your registered number.");
@@ -100,7 +104,12 @@ export default function Login() {
             if (res && res.success) {
                 setTimer(300);
                 setCanResend(false);
-                setOtp("");
+                const mockOtp = res.otp || res.mock_otp || res.data?.otp;
+                if (mockOtp) {
+                    setOtp(String(mockOtp));
+                } else {
+                    setOtp("");
+                }
                 toast.success("New OTP sent successfully");
             } else {
                 setError(res?.message || "Failed to resend OTP");

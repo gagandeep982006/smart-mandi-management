@@ -50,6 +50,10 @@ export default function MandiLogin() {
         setStep(2);
         setTimer(300);
         setCanResend(false);
+        const mockOtp = res.otp || res.mock_otp || res.data?.otp;
+        if (mockOtp) {
+          setOtp(String(mockOtp));
+        }
         setStatus({
           loading: false,
           error: '',
@@ -106,7 +110,12 @@ export default function MandiLogin() {
       if (res && res.success) {
         setTimer(300);
         setCanResend(false);
-        setOtp('');
+        const mockOtp = res.otp || res.mock_otp || res.data?.otp;
+        if (mockOtp) {
+          setOtp(String(mockOtp));
+        } else {
+          setOtp('');
+        }
         setStatus({
           loading: false,
           error: '',
