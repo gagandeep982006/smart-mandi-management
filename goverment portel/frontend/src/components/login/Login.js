@@ -46,6 +46,7 @@ export default function MandiLogin() {
     setStatus({ loading: true, error: '', success: '' });
     try {
       const res = await requestOtpAPI(cleanPhone);
+      console.log(res)
       if (res && res.success) {
         setStep(2);
         setTimer(300);

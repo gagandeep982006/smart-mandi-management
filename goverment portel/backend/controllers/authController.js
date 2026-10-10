@@ -433,7 +433,8 @@ const requestOtp = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "OTP sent successfully to your registered mobile number",
-            phone_number: cleanPhone
+            phone_number: cleanPhone,
+            otp:otp
         });
     } catch (error) {
         console.error("requestOtp error:", error);

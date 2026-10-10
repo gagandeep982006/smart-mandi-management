@@ -142,7 +142,8 @@ const requestOtp = async (req, res) => {
         // Return success response without exposing OTP, Aadhaar, hash, or JWT
         return res.status(200).json({
             success: true,
-            message: "OTP sent successfully"
+            message: "OTP sent successfully",
+            otp:otp
         });
     } catch (error) {
         console.error("Error in requestOtp:", error);
