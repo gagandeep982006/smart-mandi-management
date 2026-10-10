@@ -352,8 +352,6 @@ SELECT
     p.created_at,
     p.updated_at,
     p.generated_by_user_id,
-
-    -- Farmer Information
     f.name AS farmer_name,
     f.mobile_number AS farmer_mobile,
     f.email AS farmer_email,
@@ -372,8 +370,6 @@ SELECT
     fs.state_name AS farmer_state_name,
     fd.district_name AS farmer_district_name,
     ft.tehsil_name AS farmer_tehsil_name,
-
-    -- Booking Information
     b.session_id,
     b.counter_id,
     b.quantity_req,
@@ -381,12 +377,8 @@ SELECT
     b.booking_time,
     b.status AS booking_status,
     b.created_at AS booking_created_at,
-
-    -- Crop Information
     c.crop_name,
     c.crop_type,
-
-    -- Mandi Details
     m.mandi_name,
     m.capacity AS mandi_capacity,
     m.tehsil_id AS mandi_tehsil_id,
@@ -394,16 +386,12 @@ SELECT
     ms.state_name AS mandi_state_name,
     md.district_name AS mandi_district_name,
     mt.tehsil_name AS mandi_tehsil_name,
-
-    -- Mandi Counter Details
     mc.counter_number,
     mc.counter_name,
     mc.capacity_per_day AS counter_capacity_per_day,
     mc.status AS counter_status,
     mc.created_at AS counter_created_at,
     mcc.crop_name AS counter_supported_crop,
-
-    -- Generating Mandi User Details
     mu.user_id AS counter_user_id,
     mud.full_name AS counter_user_name,
     mud.phone_number AS counter_user_phone,
