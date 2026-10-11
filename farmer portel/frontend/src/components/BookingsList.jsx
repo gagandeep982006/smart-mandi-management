@@ -13,6 +13,7 @@ import {
   Search,
   CheckCircle2
 } from 'lucide-react';
+import CircularLoader from './CircularLoader';
 
 export default function BookingsList({ onNavigate, onReschedule, onCancel }) {
   const [bookings, setBookings] = useState([]);
@@ -197,10 +198,7 @@ export default function BookingsList({ onNavigate, onReschedule, onCancel }) {
 
       {/* Bookings List */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gray-500)' }}>
-          <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
-          <span>Loading bookings...</span>
-        </div>
+        <CircularLoader size={40} text="Loading appointments & bookings..." center />
       ) : sortedBookings.length > 0 ? (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -344,7 +342,7 @@ export default function BookingsList({ onNavigate, onReschedule, onCancel }) {
             >
               {loadingMore ? (
                 <>
-                  <RefreshCw size={16} className="animate-spin" /> Loading more...
+                  <CircularLoader size={16} strokeWidth={2.5} style={{ marginRight: '6px' }} /> Loading more...
                 </>
               ) : (
                 <>Load More Bookings ({bookings.length} of {totalRecords})</>

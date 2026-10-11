@@ -19,6 +19,7 @@ import {
   Bell,
   RefreshCw
 } from 'lucide-react';
+import CircularLoader from './CircularLoader';
 
 export default function Dashboard({ 
   dashboardData, 
@@ -30,6 +31,14 @@ export default function Dashboard({
   const [earlyRequest, setEarlyRequest] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [earlyNotice, setEarlyNotice] = useState(null);
+
+  if (!dashboardData) {
+    return (
+      <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
+        <CircularLoader size={44} text="Loading farmer dashboard data..." center />
+      </div>
+    );
+  }
 
   const { 
     farmer, 
@@ -182,7 +191,7 @@ export default function Dashboard({
                 disabled={actionLoading}
                 onClick={() => handleRespondEarly(earlyRequest.request_id, 'ACCEPTED')}
               >
-                {actionLoading ? <RefreshCw size={14} className="animate-spin" /> : null}
+                {actionLoading ? <CircularLoader size={14} strokeWidth={2.5} color="#ffffff" style={{ marginRight: '6px' }} /> : null}
                 <span>{t('acceptEarlyArrival')}</span>
               </button>
 

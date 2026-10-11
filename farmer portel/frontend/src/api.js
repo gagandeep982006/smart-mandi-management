@@ -1,36 +1,43 @@
+import { topLoader } from './utils/topLoader';
+
 const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
 
 /**
- * Universal fetch wrapper with credentials: "include"
+ * Universal fetch wrapper with credentials: "include" and topLoader tracking
  */
 export async function apiFetch(endpoint, options = {}) {
-    const config = {
-        ...options,
-        credentials: "include",
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {})
-        }
-    };
-
-    if (config.body && typeof config.body === "object" && !(config.body instanceof FormData)) {
-        config.body = JSON.stringify(config.body);
-    }
-
-    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-    const response = await fetch(`${API_BASE}${cleanEndpoint}`, config);
-    let data;
+    topLoader.requestStarted();
     try {
-        data = await response.json();
-    } catch (err) {
-        data = { success: false, message: "Invalid server response" };
-    }
+        const config = {
+            ...options,
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+            }
+        };
 
-    if (!response.ok) {
-        throw new Error(data.message || `Request failed with status ${response.status}`);
-    }
+        if (config.body && typeof config.body === "object" && !(config.body instanceof FormData)) {
+            config.body = JSON.stringify(config.body);
+        }
 
-    return data;
+        const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+        const response = await fetch(`${API_BASE}${cleanEndpoint}`, config);
+        let data;
+        try {
+            data = await response.json();
+        } catch (err) {
+            data = { success: false, message: "Invalid server response" };
+        }
+
+        if (!response.ok) {
+            throw new Error(data.message || `Request failed with status ${response.status}`);
+        }
+
+        return data;
+    } finally {
+        topLoader.requestFinished();
+    }
 }
 
 // Authentication APIs

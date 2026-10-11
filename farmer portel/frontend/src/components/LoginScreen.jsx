@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Lock
 } from 'lucide-react';
+import CircularLoader from './CircularLoader';
 
 export default function LoginScreen({ onLoginSuccess }) {
   const [step, setStep] = useState(1); // 1: Aadhaar + Mobile, 2: OTP
@@ -252,7 +253,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                 >
                   {loading ? (
                     <>
-                      <RefreshCw size={18} className="animate-spin" /> Verifying Record...
+                      <CircularLoader size={18} strokeWidth={2.5} color="#ffffff" style={{ marginRight: '8px' }} /> Verifying Record...
                     </>
                   ) : (
                     <>
@@ -362,7 +363,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                 >
                   {loading ? (
                     <>
-                      <RefreshCw size={18} className="animate-spin" /> Verifying...
+                      <CircularLoader size={18} strokeWidth={2.5} color="#ffffff" style={{ marginRight: '8px' }} /> Verifying...
                     </>
                   ) : (
                     <>

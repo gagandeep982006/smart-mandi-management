@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { farmerApi } from '../api';
 import { AlertCircle, RefreshCw, X, ShieldAlert } from 'lucide-react';
+import CircularLoader from './CircularLoader';
 import { formatIndianTime, formatIndianDate } from '../utils/dateUtils';
 
 export default function CancelModal({ booking, onClose, onSuccess }) {
@@ -123,7 +124,7 @@ export default function CancelModal({ booking, onClose, onSuccess }) {
           <button className="btn btn-danger" onClick={handleCancel} disabled={loading || !canCancel}>
             {loading ? (
               <>
-                <RefreshCw size={16} className="animate-spin" /> Cancelling...
+                <CircularLoader size={16} strokeWidth={2.5} color="#ffffff" style={{ marginRight: '6px' }} /> Cancelling...
               </>
             ) : (
               'Confirm Cancellation'

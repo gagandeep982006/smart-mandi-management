@@ -382,6 +382,7 @@ const getProcurementSessions = async (req, res) => {
 const getAvailableCrops = async (req, res) => {
     try {
         const sessionId = req.query.session_id ? Number(req.query.session_id) : null;
+        const farmerId = req.user?.farmer_id;
         const readDb = getReadDatabase().promise();
 
         let sql = `
@@ -392,12 +393,19 @@ const getAvailableCrops = async (req, res) => {
                 ps.session_id,
                 ps.session_name,
                 ps.start_date,
-                ps.end_date
+                ps.end_date,
+                COALESCE(
+                    pq.msp,
+                    pq.lsp,
+                    (SELECT COALESCE(pq2.msp, pq2.lsp) FROM procurement_quota pq2 WHERE pq2.crop_id = c.crop_id LIMIT 1)
+                ) AS msp_price
             FROM procurement_session ps
             JOIN crop c ON ps.crop_id = c.crop_id
+            LEFT JOIN farmer f ON f.farmer_id = ?
+            LEFT JOIN procurement_quota pq ON pq.crop_id = c.crop_id AND pq.state_id = f.state_id
             WHERE CURDATE() BETWEEN ps.start_date AND ps.end_date
         `;
-        const params = [];
+        const params = [farmerId || null];
 
         if (sessionId) {
             sql += ` AND ps.session_id = ?`;
@@ -2423,15 +2431,17 @@ const getHistory = async (req, res) => {
                 mc.counter_name,
                 p.payment_id,
                 COALESCE(p.quantity_sold, b.quantity_approved) AS quantity_sold,
-                p.rate_per_unit,
+                COALESCE(p.rate_per_unit, pq.msp, pq.lsp) AS rate_per_unit,
                 p.total_payable_amount,
                 p.payment_status,
                 p.payment_date
              FROM booking b
+             JOIN farmer f ON b.farmer_id = f.farmer_id
              JOIN procurement_session ps ON b.session_id = ps.session_id
              JOIN crop c ON b.crop_id = c.crop_id
              JOIN mandi_counter mc ON b.counter_id = mc.counter_id
              JOIN mandi m ON mc.mandi_id = m.mandi_id
+             LEFT JOIN procurement_quota pq ON pq.crop_id = b.crop_id AND pq.state_id = f.state_id
              LEFT JOIN payment p ON b.booking_id = p.booking_id
              WHERE b.farmer_id = ? 
                AND b.status = 'COMPLETED'
@@ -2457,6 +2467,8 @@ const getHistory = async (req, res) => {
                     remaining_quantity: alloc.remaining_quantity,
                     eligible_land_acres: alloc.eligible_land_area,
                     quota_per_acre: alloc.quota_per_acre,
+                    msp: alloc.msp,
+                    lsp: alloc.lsp,
                     sales_transactions: []
                 };
             }

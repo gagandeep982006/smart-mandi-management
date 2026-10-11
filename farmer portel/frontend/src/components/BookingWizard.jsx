@@ -19,6 +19,7 @@ import {
   CalendarDays,
   Building2
 } from 'lucide-react';
+import CircularLoader from './CircularLoader';
 
 export default function BookingWizard({ onBookingComplete, onCancelWizard }) {
   const [step, setStep] = useState(1);
@@ -59,6 +60,17 @@ export default function BookingWizard({ onBookingComplete, onCancelWizard }) {
 
   // 9. Created Booking Result
   const [createdBooking, setCreatedBooking] = useState(null);
+
+  // Authoritative crop rate derived dynamically from state-specific procurement_quota
+  const effectiveCropRate = Number(
+    allocation?.msp != null && Number(allocation.msp) > 0
+      ? allocation.msp
+      : (allocation?.lsp != null && Number(allocation.lsp) > 0
+          ? allocation.lsp
+          : (selectedCrop?.msp_price != null && Number(selectedCrop.msp_price) > 0
+              ? selectedCrop.msp_price
+              : 0))
+  );
 
   // 9 Guided Steps
   const stepsList = [
@@ -433,38 +445,42 @@ export default function BookingWizard({ onBookingComplete, onCancelWizard }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {sessions.map((s) => {
-              const isSelected = selectedSession?.session_id === s.session_id;
-              return (
-                <div
-                  key={s.session_id}
-                  onClick={() => setSelectedSession(s)}
-                  style={{
-                    border: isSelected ? '2px solid var(--primary-600)' : '1px solid var(--gray-300)',
-                    background: isSelected ? 'var(--primary-50)' : '#ffffff',
-                    borderRadius: '12px',
-                    padding: '1.25rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <div>
-                    <strong style={{ fontSize: '1.05rem', color: 'var(--gray-900)' }}>{s.session_name}</strong>
-                    <div style={{ fontSize: '0.825rem', color: 'var(--gray-600)', marginTop: '4px' }}>
-                      Season: <strong>{s.season}</strong> • Operational: {formatIndianDate(s.start_date)} to {formatIndianDate(s.end_date)}
+          {loading ? (
+            <CircularLoader size={40} text="Loading active procurement sessions..." center />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {sessions.map((s) => {
+                const isSelected = selectedSession?.session_id === s.session_id;
+                return (
+                  <div
+                    key={s.session_id}
+                    onClick={() => setSelectedSession(s)}
+                    style={{
+                      border: isSelected ? '2px solid var(--primary-600)' : '1px solid var(--gray-300)',
+                      background: isSelected ? 'var(--primary-50)' : '#ffffff',
+                      borderRadius: '12px',
+                      padding: '1.25rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div>
+                      <strong style={{ fontSize: '1.05rem', color: 'var(--gray-900)' }}>{s.session_name}</strong>
+                      <div style={{ fontSize: '0.825rem', color: 'var(--gray-600)', marginTop: '4px' }}>
+                        Season: <strong>{s.season}</strong> • Operational: {formatIndianDate(s.start_date)} to {formatIndianDate(s.end_date)}
+                      </div>
                     </div>
+                    {isSelected && (
+                      <span className="badge badge-primary">SELECTED</span>
+                    )}
                   </div>
-                  {isSelected && (
-                    <span className="badge badge-primary">SELECTED</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
 
           <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
             <button className="btn btn-primary" onClick={handleNext} disabled={!selectedSession}>
@@ -506,7 +522,7 @@ export default function BookingWizard({ onBookingComplete, onCancelWizard }) {
                     <Sprout size={36} color={isSelected ? 'var(--primary-600)' : 'var(--gray-400)'} style={{ margin: '0 auto 0.75rem' }} />
                     <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--gray-900)' }}>{c.crop_name}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--primary-700)', marginTop: '4px', fontWeight: 600 }}>
-                      Govt MSP: ₹{c.msp_price || '2275'}/Qtl
+                      Govt MSP: {c.msp_price && Number(c.msp_price) > 0 ? `₹${c.msp_price}/Qtl` : 'Quota Rate'}
                     </div>
                     {isSelected && (
                       <div style={{ marginTop: '0.5rem' }}>
@@ -545,10 +561,7 @@ export default function BookingWizard({ onBookingComplete, onCancelWizard }) {
           </div>
 
           {allocationLoading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>
-              <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
-              <span>Calculating eligible quota from verified land records...</span>
-            </div>
+            <CircularLoader size={40} text="Calculating eligible quota from verified land records..." center />
           ) : allocation ? (
             <>
               {/* Allocation Stats Cards */}
@@ -806,10 +819,7 @@ export default function BookingWizard({ onBookingComplete, onCancelWizard }) {
           </div>
 
           {countersLoading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>
-              <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
-              <span>Checking counter intake capacity for {serviceDate}...</span>
-            </div>
+            <CircularLoader size={40} text={`Checking counter intake capacity for ${serviceDate}...`} center />
           ) : counters.filter(c => String(c.status || '').trim().toLowerCase() === 'active').length > 0 ? (
             <>
               {counters.filter(c => String(c.status || '').trim().toLowerCase() === 'active').every(c => c.is_full) && (
@@ -955,10 +965,7 @@ export default function BookingWizard({ onBookingComplete, onCancelWizard }) {
           )}
 
           {slotsLoading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>
-              <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
-              <span>Checking counter slot occupancy on Primary DB...</span>
-            </div>
+            <CircularLoader size={40} text="Checking counter slot occupancy on Primary DB..." center />
           ) : slots.length > 0 ? (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
@@ -1061,7 +1068,7 @@ export default function BookingWizard({ onBookingComplete, onCancelWizard }) {
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', display: 'block', textTransform: 'uppercase' }}>Crop & MSP</span>
               <strong style={{ fontSize: '1rem', color: 'var(--gray-900)' }}>{selectedCrop?.crop_name}</strong>
-              <div style={{ fontSize: '0.75rem', color: 'var(--primary-700)', fontWeight: 600 }}>Rate: ₹{selectedCrop?.msp_price || '2275'}/Qtl</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--primary-700)', fontWeight: 600 }}>Rate: {effectiveCropRate > 0 ? `₹${effectiveCropRate}/Qtl` : 'Rate TBD'}</div>
             </div>
 
             <div>
@@ -1073,7 +1080,7 @@ export default function BookingWizard({ onBookingComplete, onCancelWizard }) {
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', display: 'block', textTransform: 'uppercase' }}>Estimated MSP Value</span>
               <strong style={{ fontSize: '1.15rem', color: 'var(--gray-900)' }}>
-                ₹{(parseFloat(requestedQuantity) * (selectedCrop?.msp_price || 2275)).toLocaleString('en-IN')}
+                ₹{(parseFloat(requestedQuantity || 0) * effectiveCropRate).toLocaleString('en-IN')}
               </strong>
               <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>Direct Bank Transfer (DBT)</div>
             </div>
@@ -1107,7 +1114,7 @@ export default function BookingWizard({ onBookingComplete, onCancelWizard }) {
             <button className="btn btn-primary" onClick={handleSubmitBooking} disabled={submitting}>
               {submitting ? (
                 <>
-                  <RefreshCw size={18} className="animate-spin" /> Processing Transaction...
+                  <CircularLoader size={18} strokeWidth={2.5} color="#ffffff" style={{ marginRight: '8px' }} /> Processing Transaction...
                 </>
               ) : (
                 <>

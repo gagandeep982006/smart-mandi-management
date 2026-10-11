@@ -1,7 +1,9 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import DashboardLayout from "./components/layout/DashboardLayout";
+import TopLoader from "./components/common/TopLoader";
+import { topLoader } from "./utils/topLoader";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import PendingPaymentsPage from "./pages/PendingPaymentsPage";
@@ -11,10 +13,24 @@ import CancelledPaymentsPage from "./pages/CancelledPaymentsPage";
 import FailedPaymentsPage from "./pages/FailedPaymentsPage";
 import ProfilePage from "./pages/ProfilePage";
 
+function RouteProgressTracker() {
+    const location = useLocation();
+    useEffect(() => {
+        topLoader.start();
+        const t = setTimeout(() => {
+            topLoader.done();
+        }, 220);
+        return () => clearTimeout(t);
+    }, [location.pathname]);
+    return null;
+}
+
 export default function App() {
     return (
         <AuthProvider>
             <BrowserRouter>
+                <TopLoader />
+                <RouteProgressTracker />
                 <Routes>
                     {/* Public Login Route */}
                     <Route path="/login" element={<LoginPage />} />

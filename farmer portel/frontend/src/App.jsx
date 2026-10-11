@@ -12,7 +12,10 @@ import HistoryView from './components/HistoryView';
 import ProfileView from './components/ProfileView';
 import RescheduleModal from './components/RescheduleModal';
 import CancelModal from './components/CancelModal';
-import { CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import TopLoader from './components/TopLoader';
+import CircularLoader from './components/CircularLoader';
+import { topLoader } from './utils/topLoader';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { useLanguage } from './context/LanguageContext';
 
 export default function App() {
@@ -88,13 +91,22 @@ export default function App() {
     await checkAuth();
   };
 
+  const handleNavigate = (tab) => {
+    if (tab === activeTab) return;
+    topLoader.start();
+    setActiveTab(tab);
+    setTimeout(() => {
+      topLoader.done();
+    }, 280);
+  };
+
   const handleLogout = async () => {
     try {
       await authApi.logout();
       setIsAuthenticated(false);
       setFarmer(null);
       setDashboardData(null);
-      setActiveTab('dashboard');
+      handleNavigate('dashboard');
       showToast('You have been logged out successfully.', 'info');
     } catch (err) {
       console.error('Logout error:', err);
@@ -104,7 +116,7 @@ export default function App() {
   const handleBookingComplete = async (targetTab = 'token') => {
     showToast('Procurement booking confirmed and queue token issued!');
     await loadDashboard();
-    setActiveTab(targetTab);
+    handleNavigate(targetTab);
   };
 
   const handleRescheduleSuccess = async () => {
@@ -131,14 +143,19 @@ export default function App() {
         gap: '1rem',
         color: 'var(--gray-600)'
       }}>
-        <RefreshCw size={36} className="animate-spin" color="var(--primary-600)" />
-        <span style={{ fontWeight: 600 }}>Verifying secure farmer session...</span>
+        <TopLoader />
+        <CircularLoader size={44} strokeWidth={4} text="Verifying secure farmer session..." center />
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <>
+        <TopLoader />
+        <LoginScreen onLoginSuccess={handleLoginSuccess} />
+      </>
+    );
   }
 
   const getTabTitle = (tab) => {
@@ -156,10 +173,11 @@ export default function App() {
 
   return (
     <div className="portal-app-layout">
+      <TopLoader />
       <Sidebar
         farmer={farmer}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleNavigate}
         onLogout={handleLogout}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -175,7 +193,7 @@ export default function App() {
           {activeTab === 'dashboard' && (
             <Dashboard
               dashboardData={dashboardData}
-              onNavigate={(tab) => setActiveTab(tab)}
+              onNavigate={handleNavigate}
               onReschedule={(b) => setRescheduleBookingTarget(b)}
               onCancel={(b) => setCancelBookingTarget(b)}
             />
@@ -184,20 +202,20 @@ export default function App() {
           {activeTab === 'book-slot' && (
             <BookingWizard
               onBookingComplete={handleBookingComplete}
-              onCancelWizard={() => setActiveTab('dashboard')}
+              onCancelWizard={() => handleNavigate('dashboard')}
             />
           )}
 
           {activeTab === 'bookings' && (
             <BookingsList
-              onNavigate={(tab) => setActiveTab(tab)}
+              onNavigate={handleNavigate}
               onReschedule={(b) => setRescheduleBookingTarget(b)}
               onCancel={(b) => setCancelBookingTarget(b)}
             />
           )}
 
           {activeTab === 'token' && (
-            <TokenView onNavigate={(tab) => setActiveTab(tab)} />
+            <TokenView onNavigate={handleNavigate} />
           )}
 
           {activeTab === 'payments' && (

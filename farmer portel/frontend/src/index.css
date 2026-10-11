@@ -1147,4 +1147,31 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Circular Loader & Spinner Animations */
+@keyframes circular-loader-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.circular-loader-wrapper {
+  transition: opacity 0.2s ease-in-out;
+}
+
 

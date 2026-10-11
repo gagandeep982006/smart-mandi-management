@@ -1,5 +1,8 @@
+import React, { useEffect } from 'react';
 import './App.css';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import TopLoader from './components/TopLoader';
+import { topLoader } from './utils/topLoader';
 import DashboardHome from './components/home/Home';
 import Login from './components/login/Login'
 import DashboardLayout from './components/home/DashboardLayout.js';
@@ -33,9 +36,26 @@ import FarmerState from './context/Farmer/FarmerState.js'
 import MandiState from './context/Mandi/MandiState.js'
 import CropState from './context/Crop/CropState.js'
 import ProcurementState from './context/Procurement/ProcurementState.js';
+
+function RouteProgressTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    topLoader.start();
+    const timer = setTimeout(() => {
+      topLoader.done();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [location.pathname, location.search]);
+
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <RouteProgressTracker />
+      <TopLoader />
       <AuthState>
         <StateState>
           <DistrictState>

@@ -18,6 +18,7 @@ import {
   Megaphone,
   Bell
 } from 'lucide-react';
+import CircularLoader from './CircularLoader';
 
 export default function TokenView({ onNavigate }) {
   const { lang, t } = useLanguage();
@@ -186,10 +187,11 @@ export default function TokenView({ onNavigate }) {
       )}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gray-500)' }}>
-          <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
-          <span>{lang === 'hi' ? 'सक्रिय टोकन एवं लाइव कतार स्थिति प्राप्त की जा रही है...' : 'Fetching current active token and live queue status...'}</span>
-        </div>
+        <CircularLoader 
+          size={40} 
+          text={lang === 'hi' ? 'सक्रिय टोकन एवं लाइव कतार स्थिति प्राप्त की जा रही है...' : 'Fetching current active token and live queue status...'} 
+          center 
+        />
       ) : tokenData ? (
         <>
           {/* Live Queue Pulse Banner */}

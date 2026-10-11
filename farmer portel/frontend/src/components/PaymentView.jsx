@@ -16,6 +16,7 @@ import {
   ZoomIn,
   X
 } from 'lucide-react';
+import CircularLoader from './CircularLoader';
 
 export default function PaymentView() {
   const [payments, setPayments] = useState([]);
@@ -149,10 +150,7 @@ export default function PaymentView() {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gray-500)' }}>
-            <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
-            <span>Loading payment records...</span>
-          </div>
+          <CircularLoader size={40} text="Loading payment settlement records..." center />
         ) : payments.length > 0 ? (
           <div className="table-responsive">
             <table className="custom-table">

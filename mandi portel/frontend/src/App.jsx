@@ -12,15 +12,22 @@ import MandiSettings from "./pages/MandiSettings";
 import CounterTimings from "./pages/CounterTimings";
 import ChatbotPage from "./pages/ChatbotPage";
 import Profile from "./pages/Profile";
+import TopLoader from "./components/TopLoader";
+import { topLoader } from "./utils/topLoader";
 
 function ProtectedLayout() {
     const { user, loading } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
 
-    // Automatically close mobile drawer when navigating
+    // Automatically close mobile drawer and trigger topLoader when navigating
     React.useEffect(() => {
         setSidebarOpen(false);
+        topLoader.start();
+        const t = setTimeout(() => {
+            topLoader.done();
+        }, 220);
+        return () => clearTimeout(t);
     }, [location.pathname]);
 
     if (loading) {
@@ -105,6 +112,7 @@ export default function App() {
         <AuthProvider>
             <ToastProvider>
                 <BrowserRouter>
+                    <TopLoader />
                     <Routes>
                         <Route path="/login" element={<Login />} />
                         <Route path="/*" element={<ProtectedLayout />} />

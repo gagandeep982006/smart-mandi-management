@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { farmerApi } from '../api';
 import { Clock, RefreshCw, X, AlertCircle, CheckCircle2 } from 'lucide-react';
+import CircularLoader from './CircularLoader';
 import { formatIndianTime, formatIndianDate } from '../utils/dateUtils';
 
 export default function RescheduleModal({ booking, onClose, onSuccess }) {
@@ -249,10 +250,7 @@ export default function RescheduleModal({ booking, onClose, onSuccess }) {
             )}
           </div>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--gray-500)' }}>
-              <RefreshCw size={20} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
-              <span>Checking counter slot availability...</span>
-            </div>
+            <CircularLoader size={34} text="Checking counter slot availability..." center />
           ) : slots.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.65rem' }}>
               {slots.filter(s => s.status !== 'PAST' && !s.is_past).map((slot, idx) => {
@@ -317,7 +315,7 @@ export default function RescheduleModal({ booking, onClose, onSuccess }) {
           >
             {submitting ? (
               <>
-                <RefreshCw size={16} className="animate-spin" /> Rescheduling...
+                <CircularLoader size={16} strokeWidth={2.5} color="#ffffff" style={{ marginRight: '6px' }} /> Rescheduling...
               </>
             ) : (
               'Confirm New Slot'

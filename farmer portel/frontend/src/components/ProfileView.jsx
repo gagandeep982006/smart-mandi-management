@@ -12,6 +12,7 @@ import {
   Lock,
   CreditCard
 } from 'lucide-react';
+import CircularLoader from './CircularLoader';
 
 export default function ProfileView() {
   const [profile, setProfile] = useState(null);
@@ -79,10 +80,7 @@ export default function ProfileView() {
       )}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gray-500)' }}>
-          <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
-          <span>Loading verified farmer credentials...</span>
-        </div>
+        <CircularLoader size={40} text="Loading verified farmer credentials and land records..." center />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
           {/* Identity & Personal Info Card */}

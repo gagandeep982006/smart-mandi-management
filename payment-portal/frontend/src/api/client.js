@@ -1,10 +1,14 @@
+import { topLoader } from "../utils/topLoader";
+
 const rawBase = (process.env.REACT_APP_API_URL || "http://localhost:5004/api").trim().replace(/\/+$/, "");
 const BASE_URL = rawBase.endsWith("/api") ? rawBase : `${rawBase}/api`;
 
 /**
- * Universal API fetch wrapper with credentials: "include" for HttpOnly cookies.
+ * Universal API fetch wrapper with credentials: "include" for HttpOnly cookies
+ * and topLoader progress tracking.
  */
 export async function apiRequest(endpoint, options = {}) {
+    topLoader.requestStarted();
     const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
     const url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}${cleanEndpoint}`;
 
@@ -45,5 +49,7 @@ export async function apiRequest(endpoint, options = {}) {
             throw networkError;
         }
         throw err;
+    } finally {
+        topLoader.requestFinished();
     }
 }

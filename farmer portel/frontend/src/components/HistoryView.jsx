@@ -16,6 +16,7 @@ import {
   Clock,
   Ticket
 } from 'lucide-react';
+import CircularLoader from './CircularLoader';
 
 export default function HistoryView() {
   const [activeSubTab, setActiveSubTab] = useState('sales'); // 'sales' (MySQL) | 'recent' (MongoDB)
@@ -229,10 +230,7 @@ export default function HistoryView() {
           )}
 
           {salesLoading ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gray-500)' }}>
-              <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
-              <span>Loading historical sales records from primary database...</span>
-            </div>
+            <CircularLoader size={40} text="Loading historical sales records from primary database..." center />
           ) : salesHistory.length > 0 ? (
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -311,7 +309,7 @@ export default function HistoryView() {
                                       {Number(tr.quantity_sold || tr.quantity_approved || 0).toFixed(2)} Qtl
                                     </strong>
                                   </td>
-                                  <td>₹{tr.rate_per_unit || '2275'}/Qtl</td>
+                                  <td>{tr.rate_per_unit || item.msp ? `₹${tr.rate_per_unit || item.msp}/Qtl` : 'Rate TBD'}</td>
                                   <td>
                                     <span className="badge badge-success">COMPLETED</span>
                                   </td>
@@ -342,7 +340,7 @@ export default function HistoryView() {
                 >
                   {salesLoadingMore ? (
                     <>
-                      <RefreshCw size={16} className="animate-spin" /> Loading more sales...
+                      <CircularLoader size={16} strokeWidth={2.5} style={{ marginRight: '6px' }} /> Loading more sales...
                     </>
                   ) : (
                     <>Load More Sales Records ({salesTransactions.length} of {salesTotalRecords})</>
@@ -395,10 +393,7 @@ export default function HistoryView() {
             </div>
 
             {recentLoading ? (
-              <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gray-500)' }}>
-                <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
-                <span>Retrieving recent history from MongoDB...</span>
-              </div>
+              <CircularLoader size={40} text="Retrieving recent history from MongoDB..." center />
             ) : recentBookings.length > 0 ? (
               <>
                 <div className="table-responsive">

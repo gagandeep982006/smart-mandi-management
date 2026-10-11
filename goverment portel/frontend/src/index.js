@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { initFetchInterceptor } from './utils/topLoader';
+
+// Initialize global fetch interceptor to trigger top progress bar on all API calls
+initFetchInterceptor();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
