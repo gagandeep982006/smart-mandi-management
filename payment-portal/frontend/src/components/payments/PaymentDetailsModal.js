@@ -209,19 +209,6 @@ export default function PaymentDetailsModal({ paymentId, isOpen, onClose }) {
                                 {activeTab === "farmer" && (
                                     <div>
                                         {/* Authorized Aadhaar Banner */}
-                                        <div className="aadhaar-box">
-                                            <div>
-                                                <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#1e3a8a", marginBottom: "3px" }}>
-                                                    Authorized Aadhaar Number (HMAC Pepper Resolution)
-                                                </div>
-                                                <div className="aadhaar-number">{f?.aadhaar_number || "NOT_AVAILABLE"}</div>
-                                            </div>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#16a34a", fontSize: "12px", fontWeight: 600 }}>
-                                                <ShieldCheck size={18} />
-                                                <span>UIDAI Verified</span>
-                                            </div>
-                                        </div>
-
                                         <div className="detail-grid">
                                             <div className="detail-item">
                                                 <div className="detail-item-label">Full Name</div>

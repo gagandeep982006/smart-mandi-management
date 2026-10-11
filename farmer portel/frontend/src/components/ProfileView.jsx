@@ -103,18 +103,6 @@ export default function ProfileView() {
                 <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', display: 'block' }}>Registered Mobile</span>
                 <strong>+91 {profile?.mobile_number || profile?.mobile}</strong>
               </div>
-
-              <div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', display: 'block' }}>Aadhaar Number</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Lock size={15} color="var(--primary-600)" />
-                  <strong style={{ letterSpacing: '0.08em', fontSize: '1.05rem', color: 'var(--gray-900)' }}>
-                    {formatAadhaar(profile?.aadhaar_number)}
-                  </strong>
-                  <span className="badge badge-primary" style={{ fontSize: '0.65rem' }}>VERIFIED</span>
-                </div>
-              </div>
-
               <div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', display: 'block' }}>Farmer System ID</span>
                 <code>#{profile?.farmer_id}</code>

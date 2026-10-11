@@ -231,23 +231,6 @@ export default function ProfilePage() {
                                 Strict State Isolation enforced. Only payments within this state are accessible.
                             </span>
                         </div>
-
-                        <div>
-                            <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--gray-500)", textTransform: "uppercase" }}>Aadhaar Verification Status</span>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "2px" }}>
-                                <CreditCard size={15} color="#16a34a" />
-                                <span style={{ fontSize: "14px", fontWeight: 700, fontFamily: "monospace", color: "var(--gray-900)" }}>
-                                    {profile.masked_aadhaar}
-                                </span>
-                                <span style={{ fontSize: "10.5px", background: "#f0fdf4", color: "#166534", padding: "1px 6px", borderRadius: "4px", border: "1px solid #bbf7d0", fontWeight: 600 }}>
-                                    HMAC Blind-Indexed
-                                </span>
-                            </div>
-                            <span style={{ fontSize: "11px", color: "var(--gray-500)" }}>
-                                Plaintext Aadhaar is never stored; secured via HMAC-SHA256 blind index pepper.
-                            </span>
-                        </div>
-
                         <div>
                             <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--gray-500)", textTransform: "uppercase" }}>Account Role</span>
                             <div style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--gray-900)", marginTop: "2px" }}>

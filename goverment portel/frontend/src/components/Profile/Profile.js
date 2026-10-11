@@ -150,12 +150,6 @@ export default function Profile() {
                 <label>Official Email</label>
                 <div className="gov-value-box">{profile.email || 'N/A'}</div>
               </div>
-              <div className="gov-field">
-                <label>Aadhaar Verification (Masked Blind Index)</label>
-                <div className="gov-value-box aadhaar-box">
-                  🔒 {profile.masked_aadhaar || 'Verified via Pepper Blind Index'}
-                </div>
-              </div>
             </div>
           </div>
 

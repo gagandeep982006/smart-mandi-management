@@ -185,27 +185,6 @@ export default function Profile() {
                                 {profile.email || "N/A"}
                             </span>
                         </div>
-
-                        <div>
-                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600, display: "block" }}>
-                                Masked Aadhaar Verification
-                            </span>
-                            <div style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "6px",
-                                background: "#f1f5f9",
-                                border: "1px solid #cbd5e1",
-                                padding: "6px 12px",
-                                borderRadius: "6px",
-                                fontFamily: "monospace",
-                                fontSize: "0.95rem",
-                                marginTop: "3px"
-                            }}>
-                                <Lock size={13} color="var(--text-muted)" /> {profile.masked_aadhaar}
-                            </div>
-                        </div>
-
                         <div>
                             <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600, display: "block" }}>
                                 Station / Office Address
