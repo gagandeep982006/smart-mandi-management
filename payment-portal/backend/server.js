@@ -111,7 +111,6 @@ async function startServer() {
         app.listen(PORT, () => {
             console.log(`====================================================`);
             console.log(` Payment Portal Backend running on http://localhost:${PORT}`);
-            console.log(` Accepted Frontend Origin: ${FRONTEND_URL}`);
             console.log(` Primary/Secondary MySQL Topology Active`);
             console.log(`====================================================`);
         });
