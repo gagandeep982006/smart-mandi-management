@@ -4,14 +4,14 @@ import InfoContext from '../../context/Info/InfoContext';
 import './Home.css';
 
 const initialStatsData = [
-  { id: 1, title: 'States', count: 2, route: '/states', color: 'blue', icon: '📍' },
-  { id: 2, title: 'Districts', count: 6, route: '/districts', color: 'teal', icon: '🏢' },
-  { id: 3, title: 'Tehsils', count: 12, route: '/tehsils', color: 'purple', icon: '🏛️' },
-  { id: 4, title: 'Mandis', count: 28, route: '/mandis', color: 'orange', icon: '🏪' },
-  { id: 5, title: 'Mandi Counters', count: 124, route: '/mandi-counters', color: 'pink', icon: '🪟' },
-  { id: 6, title: 'Crops', count: 8, route: '/crops', color: 'green', icon: '🌱' },
-  { id: 7, title: 'Registered Farmers', count: '1,250', route: '/farmers', color: 'sky', icon: '👥' },
-  { id: 8, title: 'Procurement Session', count: '12', subtitle: 'This Season', route: '/procurement', color: 'indigo', icon: '📊' },
+  { id: 1, title: 'States', count: 0, route: '/states', color: 'blue', icon: '📍' },
+  { id: 2, title: 'Districts', count: 0, route: '/districts', color: 'teal', icon: '🏢' },
+  { id: 3, title: 'Tehsils', count: 0, route: '/tehsils', color: 'purple', icon: '🏛️' },
+  { id: 4, title: 'Mandis', count: 0, route: '/mandis', color: 'orange', icon: '🏪' },
+  { id: 5, title: 'Mandi Counters', count: 0, route: '/mandi-counters', color: 'pink', icon: '🪟' },
+  { id: 6, title: 'Crops', count: 0, route: '/crops', color: 'green', icon: '🌱' },
+  { id: 7, title: 'Registered Farmers', count: '0', route: '/farmers', color: 'sky', icon: '👥' },
+  { id: 8, title: 'Procurement Session', count: '0', subtitle: 'This Season', route: '/procurement', color: 'indigo', icon: '📊' },
   { id: 9, title: 'Add User', route: '/adduser', color: 'blue', icon: '👤+' },
   { id: 10, title: 'Chatbot', route: '/chatbot', color: 'mint', icon: '🤖' }
 ];
