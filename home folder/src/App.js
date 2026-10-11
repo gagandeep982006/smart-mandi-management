@@ -135,15 +135,6 @@ export default function App() {
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [tempUrls, setTempUrls] = useState({});
 
-  const openConfigModal = () => {
-    const map = {};
-    portals.forEach(p => {
-      map[p.id] = p.url;
-    });
-    setTempUrls(map);
-    setShowConfigModal(true);
-  };
-
   const saveConfig = () => {
     const updated = portals.map(p => ({
       ...p,
@@ -190,17 +181,6 @@ export default function App() {
               <h1>राष्ट्रीय कृषि खरीद पोर्टल हब</h1>
               <p>National Agricultural Procurement Unified Gateway • Government of India</p>
             </div>
-          </div>
-
-          <div className="header-actions">
-            <button 
-              className="filter-btn"
-              onClick={openConfigModal}
-              title="Configure Portal Ports & Hostnames"
-            >
-              <Settings2 size={16} />
-              <span>Configure Ports</span>
-            </button>
           </div>
         </div>
       </header>
