@@ -315,8 +315,9 @@ export default function ChatbotPage() {
                         onClick={() => setIsFlowchartOpen(true)}
                         title="View Mandi Operational Workflow"
                     >
-                        <Layers size={15} />
-                        <span>Workflow Flowchart</span>
+                        <Layers size={14} />
+                        <span className="btn-label-desktop">Workflow Flowchart</span>
+                        <span className="btn-label-mobile">Flowchart</span>
                     </button>
 
                     <button 
@@ -326,7 +327,8 @@ export default function ChatbotPage() {
                         title="Reset conversation"
                     >
                         <RefreshCw size={14} />
-                        <span>Reset Chat</span>
+                        <span className="btn-label-desktop">Reset Chat</span>
+                        <span className="btn-label-mobile">Reset</span>
                     </button>
                 </div>
             </div>
@@ -369,6 +371,35 @@ export default function ChatbotPage() {
                         ))}
                     </div>
 
+                    {/* Quick Category Questions Pills (when a specific category is selected) */}
+                    {selectedCategory !== "ALL" && (
+                        <div className="chatbot-category-questions-bar">
+                            <div className="cat-q-header">
+                                <span>Suggested questions for <strong>{selectedCategory}</strong>:</span>
+                                <button 
+                                    type="button" 
+                                    className="cat-q-clear-btn" 
+                                    onClick={() => setSelectedCategory("ALL")}
+                                >
+                                    ✕ Clear
+                                </button>
+                            </div>
+                            <div className="cat-q-pills">
+                                {FAQ_DATABASE.find(c => c.category === selectedCategory)?.questions.map((qItem, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        className="cat-q-pill"
+                                        onClick={() => handleSendMessage(qItem.q)}
+                                    >
+                                        <Sparkles size={12} />
+                                        <span>{qItem.q}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Messages Feed */}
                     <div className="chatbot-messages-feed">
                         {messages.map(msg => (
@@ -408,19 +439,19 @@ export default function ChatbotPage() {
                     <div className="chatbot-input-bar">
                         <input
                             type="text"
-                            placeholder="Ask about tokens, MSP pricing, future dates, or counter capacity..."
+                            className="chatbot-input-field"
+                            placeholder="Ask about tokens, MSP, counter capacity..."
                             value={inputQuery}
                             onChange={(e) => setInputQuery(e.target.value)}
                             onKeyDown={handleKeyDown}
                         />
                         <button
                             type="button"
-                            className="btn btn-primary"
+                            className="btn btn-primary chatbot-send-btn"
                             onClick={() => handleSendMessage()}
                             disabled={!inputQuery.trim()}
-                            style={{ padding: "10px 18px" }}
                         >
-                            <Send size={16} />
+                            <Send size={15} />
                             <span>Send</span>
                         </button>
                     </div>
@@ -445,19 +476,42 @@ export default function ChatbotPage() {
                             />
                         </div>
 
-                        <div className="popular-questions-list">
-                            {filteredSidebarFaqs.slice(0, 8).map((faq, idx) => (
+                        {/* Category filter pills inside FAQ card */}
+                        <div className="faq-chips-filter">
+                            {categories.map(cat => (
                                 <button
-                                    key={idx}
+                                    key={cat}
                                     type="button"
-                                    className="popular-question-item"
-                                    onClick={() => handleSendMessage(faq.q)}
-                                    title="Click to ask"
+                                    className={`chatbot-chip ${selectedCategory === cat ? "active" : ""}`}
+                                    onClick={() => setSelectedCategory(cat)}
                                 >
-                                    <ChevronRight size={14} style={{ flexShrink: 0, marginTop: "2px" }} />
-                                    <span>{faq.q}</span>
+                                    {cat}
                                 </button>
                             ))}
+                        </div>
+
+                        <div className="popular-questions-list">
+                            {filteredSidebarFaqs.length > 0 ? (
+                                filteredSidebarFaqs.map((faq, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        className="popular-question-item"
+                                        onClick={() => {
+                                            handleSendMessage(faq.q);
+                                            setMobileTab("chat");
+                                        }}
+                                        title="Click to ask"
+                                    >
+                                        <ChevronRight size={14} style={{ flexShrink: 0, marginTop: "2px" }} />
+                                        <span>{faq.q}</span>
+                                    </button>
+                                ))
+                            ) : (
+                                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", padding: "12px", textAlign: "center" }}>
+                                    No FAQs found matching your search.
+                                </p>
+                            )}
                         </div>
                     </div>
 
