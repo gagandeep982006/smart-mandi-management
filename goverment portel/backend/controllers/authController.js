@@ -306,13 +306,15 @@ const register = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
-        res.clearCookie("gov_token", {
+        const isProduction = process.env.NODE_ENV === "production";
+        const clearOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
             path: "/"
-        });
-        res.clearCookie("token", { path: "/" });
+        };
+        res.clearCookie("gov_token", clearOptions);
+        res.clearCookie("token", clearOptions);
         return res.status(200).json({
             success: true,
             message: "Logged out successfully"
@@ -652,10 +654,11 @@ const verifyOtp = async (req, res) => {
             { expiresIn: jwtExpiry }
         );
 
+        const isProduction = process.env.NODE_ENV === "production";
         res.cookie("gov_token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
             maxAge: cookieMaxAge,
             path: "/"
         });

@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
  */
 const authenticateToken = (req, res, next) => {
     try {
-        const token = req.cookies?.gov_token;
+        const token = req.cookies?.gov_token || req.cookies?.token;
 
         if (!token) {
             return res.status(401).json({

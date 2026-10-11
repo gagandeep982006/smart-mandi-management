@@ -1,7 +1,7 @@
 import TehsilContext from "./TehsilContext";
 
 export default function TehsilState(props) {
-    const host = process.env.REACT_APP_HOST;
+    const host = (process.env.REACT_APP_HOST || "").replace(/\/+$/, "");
 
     const getTehsil = async (district_id) => {
         try {

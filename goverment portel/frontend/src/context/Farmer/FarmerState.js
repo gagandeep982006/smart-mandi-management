@@ -1,7 +1,7 @@
 import FarmerContext from "./FarmerContext";
 
 export default function FarmerState(props) {
-    const host = process.env.REACT_APP_HOST;
+    const host = (process.env.REACT_APP_HOST || "").replace(/\/+$/, "");
 
     const addFarmer = async (payload) => {
         try {

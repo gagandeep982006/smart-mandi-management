@@ -1,7 +1,7 @@
 import ProcurementContext from "./ProcurementContext";
 
 export default function AuthState(props) {
-    const host = process.env.REACT_APP_HOST;
+    const host = (process.env.REACT_APP_HOST || "").replace(/\/+$/, "");
     const getProcurementSession = async () => {
         try {
             const response = await fetch(

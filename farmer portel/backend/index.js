@@ -14,27 +14,42 @@ const { validateSecurityConfig } = require("./services/securityStore");
 validateSecurityConfig();
 
 const app = express();
+app.set("trust proxy", 1);
 
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
 
 // CORS
-const allowedOrigins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5002",
-    "http://127.0.0.1:5002"
-];
-if (process.env.FRONTEND_URL) allowedOrigins.push(process.env.FRONTEND_URL);
+const parseAllowedOrigins = () => {
+    const defaultOrigins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3002",
+        "http://127.0.0.1:3002",
+        "http://localhost:5002",
+        "http://127.0.0.1:5002"
+    ];
+    const configured = (process.env.FRONTEND_URL || "")
+        .split(",")
+        .map(o => o.trim().replace(/\/+$/, ""))
+        .filter(Boolean);
+    return [...new Set([...defaultOrigins, ...configured])];
+};
 
 app.use(
     cors({
         origin: function (origin, callback) {
-            if (!origin || allowedOrigins.includes(origin) || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) {
+            if (!origin) return callback(null, true);
+            const normalized = origin.trim().replace(/\/+$/, "");
+            const allowedOrigins = parseAllowedOrigins();
+            if (
+                allowedOrigins.includes(normalized) ||
+                (process.env.NODE_ENV !== "production" && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalized))
+            ) {
                 return callback(null, true);
             }
-            return callback(null, true);
+            return callback(null, false);
         },
         credentials: true
     })

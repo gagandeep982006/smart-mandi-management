@@ -14,6 +14,7 @@ validateSecurityConfig();
 
 // 2. Create Express app
 const app = express();
+app.set("trust proxy", 1);
 
 // 3. Configure express.json()
 app.use(express.json());
@@ -22,15 +23,21 @@ app.use(express.json());
 app.use(cookieParser());
 
 // 5. Configure CORS
-const allowedOrigins = [
-    process.env.FRONTEND_URL,
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5001",
-    "http://127.0.0.1:5001",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173"
-];
+const parseAllowedOrigins = () => {
+    const defaultOrigins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5001",
+        "http://127.0.0.1:5001",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ];
+    const configured = (process.env.FRONTEND_URL || "")
+        .split(",")
+        .map(o => o.trim().replace(/\/+$/, ""))
+        .filter(Boolean);
+    return [...new Set([...defaultOrigins, ...configured])];
+};
 
 app.use(
     cors({
@@ -39,15 +46,18 @@ app.use(
                 return callback(null, true);
             }
 
-            // Remove trailing slash before comparison
-            const normalizedOrigin = origin.replace(/\/$/, "");
+            const normalizedOrigin = origin.trim().replace(/\/+$/, "");
+            const allowedOrigins = parseAllowedOrigins();
 
-            if (allowedOrigins.includes(normalizedOrigin)) {
+            if (
+                allowedOrigins.includes(normalizedOrigin) ||
+                (process.env.NODE_ENV !== "production" && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalizedOrigin))
+            ) {
                 return callback(null, true);
             }
 
             console.log("Blocked CORS origin:", origin);
-            return callback(new Error("Not allowed by CORS"));
+            return callback(null, false);
         },
 
         credentials: true

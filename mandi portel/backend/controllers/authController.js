@@ -31,12 +31,15 @@ const parseExpiryToMs = (expiry) => {
 
 const logout = async (req, res) => {
     try {
-        res.clearCookie("mandi_token", {
+        const isProduction = process.env.NODE_ENV === "production";
+        const clearOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax"
-        });
-        res.clearCookie("token");
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
+            path: "/"
+        };
+        res.clearCookie("mandi_token", clearOptions);
+        res.clearCookie("token", clearOptions);
 
         return res.status(200).json({
             success: true,
@@ -376,11 +379,13 @@ const verifyOtp = async (req, res) => {
             { expiresIn: jwtExpiry }
         );
 
+        const isProduction = process.env.NODE_ENV === "production";
         const cookieMaxAge = parseExpiryToMs(jwtExpiry);
         res.cookie("mandi_token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
+            path: "/",
             maxAge: cookieMaxAge
         });
 

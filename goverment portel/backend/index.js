@@ -15,6 +15,7 @@ const { validateSecurityConfig } = require("./services/securityStore");
 validateSecurityConfig();
 
 const app = express();
+app.set("trust proxy", 1);
 
 const createDatabase = require("./model/db");
 const createfarmeraddress = require('./model/farmeraddress');
@@ -48,17 +49,23 @@ async function initDb() {
 }
 initDb();
 
-const allowedOrigins = [
-    process.env.FRONTEND_URL
-];
+const parseAllowedOrigins = () => {
+    const raw = process.env.FRONTEND_URL || "";
+    return raw
+        .split(",")
+        .map(o => o.trim().replace(/\/+$/, ""))
+        .filter(Boolean);
+};
 
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin) || (process.env.NODE_ENV !== "production" && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))) {
+        const normalized = origin.trim().replace(/\/+$/, "");
+        const allowedOrigins = parseAllowedOrigins();
+        if (allowedOrigins.includes(normalized) || (process.env.NODE_ENV !== "production" && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalized))) {
             return callback(null, true);
         }
-        return callback(new Error("Not allowed by CORS"));
+        return callback(null, false);
     },
     credentials: true
 }));

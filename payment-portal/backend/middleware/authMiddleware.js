@@ -8,7 +8,7 @@ const { getReadDatabase } = require("../services/databaserouter");
  */
 async function authenticatePaymentUser(req, res, next) {
     try {
-        const token = req.cookies?.payment_token;
+        const token = req.cookies?.payment_token || req.cookies?.token;
 
         if (!token) {
             return res.status(401).json({

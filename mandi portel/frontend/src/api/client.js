@@ -2,7 +2,7 @@
  * API client configured with credentials: "include"
  * Reads HttpOnly cookie automatically.
  */
-const API_BASE = process.env.REACT_APP_API_BASE || "";
+const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
 export async function apiFetch(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
     

@@ -1,7 +1,7 @@
 import MandiContext from "./MandiContext";
 
 export default function AuthState(props) {
-    const host = process.env.REACT_APP_HOST;
+    const host = (process.env.REACT_APP_HOST || "").replace(/\/+$/, "");
 
     const getMandis = async (page,limit,payload) => {
         try {

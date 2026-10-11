@@ -1,7 +1,7 @@
 import CropsContext from './CropContext'
 
 export default function AuthState(props) {
-    const host = process.env.REACT_APP_HOST;
+    const host = (process.env.REACT_APP_HOST || "").replace(/\/+$/, "");
     
     const getCrops = async () => {
         try {

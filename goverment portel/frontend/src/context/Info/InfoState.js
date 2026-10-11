@@ -1,7 +1,7 @@
 import InfoContext from "./InfoContext";
 
 export default function AuthState(props) {
-    const host = process.env.REACT_APP_HOST;
+    const host = (process.env.REACT_APP_HOST || "").replace(/\/+$/, "");
 
     const totalDistrict = async () => {
         try {

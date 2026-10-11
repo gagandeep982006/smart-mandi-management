@@ -395,10 +395,12 @@ const verifyOtp = async (req, res) => {
         );
 
         // Store JWT in HttpOnly cookie named farmer_token
+        const isProduction = process.env.NODE_ENV === "production";
         res.cookie("farmer_token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
+            path: "/",
             maxAge: 24 * 60 * 60 * 1000
         });
 
@@ -422,12 +424,15 @@ const verifyOtp = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
-        res.clearCookie("farmer_token", {
+        const isProduction = process.env.NODE_ENV === "production";
+        const clearOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax"
-        });
-        res.clearCookie("token");
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
+            path: "/"
+        };
+        res.clearCookie("farmer_token", clearOptions);
+        res.clearCookie("token", clearOptions);
 
         return res.status(200).json({
             success: true,
@@ -475,12 +480,15 @@ const getMe = async (req, res) => {
         const isAccountActive = farmer.status === "active";
 
         if (!isAccountActive || !isMobileVerified || !isBankVerified || !isFarmerVerified) {
-            res.clearCookie("farmer_token", {
+            const isProduction = process.env.NODE_ENV === "production";
+            const clearOptions = {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "lax"
-            });
-            res.clearCookie("token");
+                secure: isProduction,
+                sameSite: isProduction ? "none" : "lax",
+                path: "/"
+            };
+            res.clearCookie("farmer_token", clearOptions);
+            res.clearCookie("token", clearOptions);
             return res.status(403).json({
                 success: false,
                 authenticated: false,

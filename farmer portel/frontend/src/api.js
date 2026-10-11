@@ -1,4 +1,4 @@
-const API_BASE = process.env.REACT_APP_API_BASE || "";
+const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
 
 /**
  * Universal fetch wrapper with credentials: "include"
@@ -17,7 +17,8 @@ export async function apiFetch(endpoint, options = {}) {
         config.body = JSON.stringify(config.body);
     }
 
-    const response = await fetch(`${API_BASE}${endpoint}`, config);
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    const response = await fetch(`${API_BASE}${cleanEndpoint}`, config);
     let data;
     try {
         data = await response.json();

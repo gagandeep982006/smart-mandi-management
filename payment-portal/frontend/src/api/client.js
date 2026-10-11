@@ -1,10 +1,12 @@
-const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5004/api";
+const rawBase = (process.env.REACT_APP_API_URL || "http://localhost:5004/api").trim().replace(/\/+$/, "");
+const BASE_URL = rawBase.endsWith("/api") ? rawBase : `${rawBase}/api`;
 
 /**
  * Universal API fetch wrapper with credentials: "include" for HttpOnly cookies.
  */
 export async function apiRequest(endpoint, options = {}) {
-    const url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}${endpoint}`;
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    const url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}${cleanEndpoint}`;
 
     const defaultHeaders = {
         "Content-Type": "application/json",

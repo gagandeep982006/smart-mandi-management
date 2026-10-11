@@ -42,11 +42,14 @@ async function logout(req, res) {
         }
 
         const isProduction = process.env.NODE_ENV === "production";
-        res.clearCookie("payment_token", {
+        const clearOptions = {
             httpOnly: true,
             secure: isProduction,
-            sameSite: isProduction ? "none" : "lax"
-        });
+            sameSite: isProduction ? "none" : "lax",
+            path: "/"
+        };
+        res.clearCookie("payment_token", clearOptions);
+        res.clearCookie("token", clearOptions);
 
         return res.status(200).json({
             success: true,
@@ -359,6 +362,7 @@ async function verifyOtp(req, res) {
             httpOnly: true,
             secure: isProduction,
             sameSite: isProduction ? "none" : "lax",
+            path: "/",
             maxAge: 24 * 60 * 60 * 1000
         });
 

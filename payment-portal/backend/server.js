@@ -15,13 +15,40 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const locationRoutes = require("./routes/locationRoutes");
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5004;
-const FRONTEND_URL = process.env.FRONTEND_URL;
+
+const parseAllowedOrigins = () => {
+    const defaultOrigins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3004",
+        "http://127.0.0.1:3004",
+        "http://localhost:5004",
+        "http://127.0.0.1:5004"
+    ];
+    const configured = (process.env.FRONTEND_URL || "")
+        .split(",")
+        .map(o => o.trim().replace(/\/+$/, ""))
+        .filter(Boolean);
+    return [...new Set([...defaultOrigins, ...configured])];
+};
 
 // 1. CORS Configuration with Credentials
 app.use(
     cors({
-        origin: [FRONTEND_URL],
+        origin: function (origin, callback) {
+            if (!origin) return callback(null, true);
+            const normalized = origin.trim().replace(/\/+$/, "");
+            const allowedOrigins = parseAllowedOrigins();
+            if (
+                allowedOrigins.includes(normalized) ||
+                (process.env.NODE_ENV !== "production" && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalized))
+            ) {
+                return callback(null, true);
+            }
+            return callback(null, false);
+        },
         credentials: true,
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization", "x-requested-with"]
