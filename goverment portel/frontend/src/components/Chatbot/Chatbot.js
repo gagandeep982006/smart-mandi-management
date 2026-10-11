@@ -418,6 +418,7 @@ export default function Chatbot() {
   const [inputQuery, setInputQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState(null);
   const [isFlowchartOpen, setIsFlowchartOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'faqs'
 
   const messagesEndRef = useRef(null);
   const isFirstRender = useRef(true);
@@ -524,6 +525,7 @@ export default function Chatbot() {
     setMessages((prev) => [...prev, userMsg, botMsg]);
     setInputQuery('');
     setActiveCategory(null);
+    setMobileTab('chat');
   };
 
   const handleKeyDown = (e) => {
@@ -589,8 +591,26 @@ export default function Chatbot() {
         </div>
       </div>
 
+      {/* Mobile Tab Switcher */}
+      <div className="chat-mobile-nav">
+        <button
+          type="button"
+          className={`chat-mobile-tab-btn ${mobileTab === 'chat' ? 'active' : ''}`}
+          onClick={() => setMobileTab('chat')}
+        >
+          <span>💬 Conversation</span>
+        </button>
+        <button
+          type="button"
+          className={`chat-mobile-tab-btn ${mobileTab === 'faqs' ? 'active' : ''}`}
+          onClick={() => setMobileTab('faqs')}
+        >
+          <span>💡 Popular FAQs</span>
+        </button>
+      </div>
+
       {/* Main Two-Column Layout */}
-      <div className="chat-layout-container">
+      <div className={`chat-layout-container mobile-tab-${mobileTab}`}>
         {/* Left Column: Interactive Chat Conversation Panel */}
         <div className="chat-conversation-panel">
           <div className="chat-messages-scroll-area">

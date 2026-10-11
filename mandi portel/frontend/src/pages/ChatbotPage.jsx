@@ -142,6 +142,7 @@ export default function ChatbotPage() {
     const [selectedCategory, setSelectedCategory] = useState("ALL");
     const [searchFilter, setSearchFilter] = useState("");
     const [isFlowchartOpen, setIsFlowchartOpen] = useState(false);
+    const [mobileTab, setMobileTab] = useState("chat"); // "chat" | "faqs"
 
     const messagesEndRef = useRef(null);
 
@@ -260,6 +261,7 @@ export default function ChatbotPage() {
 
         setMessages(prev => [...prev, userMsg, botMsg]);
         setInputQuery("");
+        setMobileTab("chat");
     };
 
     const handleKeyDown = (e) => {
@@ -306,7 +308,7 @@ export default function ChatbotPage() {
                     </div>
                 </div>
 
-                <div style={{ display: "flex", gap: "10px" }}>
+                <div className="chatbot-header-actions">
                     <button 
                         type="button" 
                         className="btn btn-outline btn-sm"
@@ -329,8 +331,28 @@ export default function ChatbotPage() {
                 </div>
             </div>
 
+            {/* Mobile Tab Switcher */}
+            <div className="chatbot-mobile-nav">
+                <button
+                    type="button"
+                    className={`chatbot-mobile-tab ${mobileTab === 'chat' ? 'active' : ''}`}
+                    onClick={() => setMobileTab('chat')}
+                >
+                    <Bot size={15} />
+                    <span>Live Chat</span>
+                </button>
+                <button
+                    type="button"
+                    className={`chatbot-mobile-tab ${mobileTab === 'faqs' ? 'active' : ''}`}
+                    onClick={() => setMobileTab('faqs')}
+                >
+                    <HelpCircle size={15} />
+                    <span>FAQs & Rules ({filteredSidebarFaqs.length})</span>
+                </button>
+            </div>
+
             {/* Two-Column Grid */}
-            <div className="chatbot-grid">
+            <div className={`chatbot-grid mobile-tab-${mobileTab}`}>
                 {/* Left/Center: Interactive Chat Panel */}
                 <div className="chatbot-main-panel">
                     {/* Category Filter Chips */}
