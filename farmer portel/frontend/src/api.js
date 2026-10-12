@@ -44,11 +44,11 @@ export async function apiFetch(endpoint, options = {}) {
 export const authApi = {
     requestOtp: (aadhaar, mobile) => apiFetch("/api/auth/request-otp", {
         method: "POST",
-        body: { aadhaar, mobile }
+        body: { aadhaar, mobile, phone_number: mobile }
     }),
     verifyOtp: (aadhaar, mobile, otp) => apiFetch("/api/auth/verify-otp", {
         method: "POST",
-        body: { aadhaar, mobile, otp }
+        body: { aadhaar, mobile, phone_number: mobile, otp }
     }),
     logout: () => apiFetch("/api/auth/logout", {
         method: "POST"

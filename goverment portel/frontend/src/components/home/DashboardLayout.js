@@ -6,6 +6,7 @@ import './DashboardLayout.css';
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -16,7 +17,8 @@ export default function DashboardLayout() {
 
   // Auth verification via HttpOnly cookie
   useEffect(() => {
-    const host = process.env.REACT_APP_HOST;
+    let isMounted = true;
+    const host = (process.env.REACT_APP_HOST || "").replace(/\/+$/, "");
     fetch(`${host}/api/auth/me`, {
       method: "GET",
       credentials: "include"
@@ -24,12 +26,25 @@ export default function DashboardLayout() {
       .then((res) => {
         if (!res.ok) {
           navigate('/login');
+        } else if (isMounted) {
+          setAuthLoading(false);
         }
       })
       .catch(() => {
         navigate('/login');
       });
+    return () => {
+      isMounted = false;
+    };
   }, [navigate, location.pathname]);
+
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "#1b4332", fontSize: "0.95rem", fontWeight: 600 }}>Verifying session...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="layout-root">

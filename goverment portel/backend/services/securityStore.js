@@ -236,13 +236,18 @@ function checkOtpRequestAllowed(rawPhone, ip) {
         const phoneRecord = securityStore.get(getPhoneKey(cleanPhone));
         if (phoneRecord) {
             // Check lockout
-            if (phoneRecord.lockoutUntil > now) {
-                const retryAfterSeconds = Math.ceil((phoneRecord.lockoutUntil - now) / 1000);
-                return {
-                    allowed: false,
-                    reason: "PHONE_LOCKED_OUT",
-                    retryAfterSeconds
-                };
+            if (phoneRecord.lockoutUntil > 0) {
+                if (phoneRecord.lockoutUntil > now) {
+                    const retryAfterSeconds = Math.ceil((phoneRecord.lockoutUntil - now) / 1000);
+                    return {
+                        allowed: false,
+                        reason: "PHONE_LOCKED_OUT",
+                        retryAfterSeconds
+                    };
+                } else {
+                    phoneRecord.lockoutUntil = 0;
+                    phoneRecord.failedAttempts = 0;
+                }
             }
 
             // Check resend cooldown (e.g. 5 minutes)
@@ -310,24 +315,34 @@ function checkVerificationAllowed(rawPhone, ip) {
 
     if (ip) {
         const ipRecord = securityStore.get(getIpKey(ip));
-        if (ipRecord && ipRecord.lockoutUntil > now) {
-            return {
-                allowed: false,
-                reason: "IP_LOCKED_OUT",
-                retryAfterSeconds: Math.ceil((ipRecord.lockoutUntil - now) / 1000)
-            };
+        if (ipRecord && ipRecord.lockoutUntil > 0) {
+            if (ipRecord.lockoutUntil > now) {
+                return {
+                    allowed: false,
+                    reason: "IP_LOCKED_OUT",
+                    retryAfterSeconds: Math.ceil((ipRecord.lockoutUntil - now) / 1000)
+                };
+            } else {
+                ipRecord.lockoutUntil = 0;
+                ipRecord.failedAttempts = 0;
+            }
         }
     }
 
     const cleanPhone = normalizePhoneNumber(rawPhone);
     if (cleanPhone) {
         const phoneRecord = securityStore.get(getPhoneKey(cleanPhone));
-        if (phoneRecord && phoneRecord.lockoutUntil > now) {
-            return {
-                allowed: false,
-                reason: "PHONE_LOCKED_OUT",
-                retryAfterSeconds: Math.ceil((phoneRecord.lockoutUntil - now) / 1000)
-            };
+        if (phoneRecord && phoneRecord.lockoutUntil > 0) {
+            if (phoneRecord.lockoutUntil > now) {
+                return {
+                    allowed: false,
+                    reason: "PHONE_LOCKED_OUT",
+                    retryAfterSeconds: Math.ceil((phoneRecord.lockoutUntil - now) / 1000)
+                };
+            } else {
+                phoneRecord.lockoutUntil = 0;
+                phoneRecord.failedAttempts = 0;
+            }
         }
     }
 

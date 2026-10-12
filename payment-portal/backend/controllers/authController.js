@@ -41,11 +41,13 @@ async function logout(req, res) {
             });
         }
 
+        const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
         const isProduction = process.env.NODE_ENV === "production";
+        const useSecure = Boolean(isProduction && isHttps);
         const clearOptions = {
             httpOnly: true,
-            secure: isProduction,
-            sameSite: isProduction ? "none" : "lax",
+            secure: useSecure,
+            sameSite: useSecure ? "none" : "lax",
             path: "/"
         };
         res.clearCookie("payment_token", clearOptions);
@@ -67,7 +69,7 @@ async function logout(req, res) {
 async function requestOtp(req, res) {
     try {
         const clientIp = getClientIp(req);
-        const rawPhone = req.body.phone_number || req.body.phone || req.body.mobile;
+        const rawPhone = req.body.phone_number;
         if (!rawPhone) {
             return res.status(400).json({
                 success: false,
@@ -166,7 +168,7 @@ async function requestOtp(req, res) {
 async function verifyOtp(req, res) {
     try {
         const clientIp = getClientIp(req);
-        const rawPhone = req.body.phone_number || req.body.phone || req.body.mobile;
+        const rawPhone = req.body.phone_number;
         const rawOtp = req.body.otp;
         const ipAddress = clientIp;
 
@@ -241,25 +243,17 @@ async function verifyOtp(req, res) {
             });
         }
 
-        // Fetch latest active OTP
-        const [otps] = await readDb.query(
+        // Fetch latest OTP
+        const [otps] = await writeDb.query(
             `SELECT otp_id, otp_hash, expires_at, attempts, verified
              FROM payment_login_otp
-             WHERE payment_user_id = ? AND verified = 0
+             WHERE payment_user_id = ?
              ORDER BY otp_id DESC
              LIMIT 1`,
             [user.payment_user_id]
         );
 
         if (otps.length === 0) {
-            const failResult = recordFailedVerification(cleanPhone, clientIp);
-            if (failResult.isLockedOut) {
-                return res.status(429).json({
-                    success: false,
-                    message: "Too many requests. Please try again later.",
-                    retry_after: failResult.retryAfterSeconds
-                });
-            }
             return res.status(400).json({
                 success: false,
                 message: "Unable to verify the OTP. Please check the code and try again."
@@ -267,23 +261,81 @@ async function verifyOtp(req, res) {
         }
 
         const otpRecord = otps[0];
+        const now = new Date();
+        const maxAttempts = parseInt(process.env.LOGIN_MAX_FAILED_ATTEMPTS, 10) || 5;
 
-        if (new Date() > new Date(otpRecord.expires_at)) {
-            const failResult = recordFailedVerification(cleanPhone, clientIp);
-            if (failResult.isLockedOut) {
-                return res.status(429).json({
-                    success: false,
-                    message: "Too many requests. Please try again later.",
-                    retry_after: failResult.retryAfterSeconds
+        // Check if this is a duplicate request of an already-verified valid OTP
+        if (otpRecord.verified) {
+            const isOtpMatch = await bcrypt.compare(cleanOtp, otpRecord.otp_hash);
+            if (isOtpMatch && now < new Date(otpRecord.expires_at)) {
+                let permissions = [];
+                try {
+                    if (typeof user.permissions === "string") {
+                        permissions = JSON.parse(user.permissions);
+                    } else if (Array.isArray(user.permissions)) {
+                        permissions = user.permissions;
+                    }
+                } catch (e) {
+                    permissions = [];
+                }
+
+                const token = jwt.sign(
+                    {
+                        payment_user_id: user.payment_user_id,
+                        username: user.username,
+                        role: user.role,
+                        state_id: user.state_id,
+                        permissions: permissions
+                    },
+                    process.env.JWT_SECRET,
+                    { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
+                );
+
+                const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
+                const isProduction = process.env.NODE_ENV === "production";
+                const useSecure = Boolean(isProduction && isHttps);
+
+                res.cookie("payment_token", token, {
+                    httpOnly: true,
+                    secure: useSecure,
+                    sameSite: useSecure ? "none" : "lax",
+                    path: "/",
+                    maxAge: 24 * 60 * 60 * 1000
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: "Login successful",
+                    user: {
+                        payment_user_id: user.payment_user_id,
+                        username: user.username,
+                        full_name: user.full_name,
+                        phone_number: user.phone_number,
+                        role: user.role,
+                        state_id: user.state_id,
+                        state_name: user.state_name,
+                        state_code: user.state_code,
+                        permissions: permissions
+                    }
                 });
             }
+
             return res.status(400).json({
                 success: false,
                 message: "Unable to verify the OTP. Please check the code and try again."
             });
         }
 
-        if (otpRecord.attempts >= 5) {
+        // Check expiry
+        if (new Date(otpRecord.expires_at) < now) {
+            return res.status(400).json({
+                success: false,
+                message: "Unable to verify the OTP. Please check the code and try again."
+            });
+        }
+
+        // Check maximum attempts
+        if (otpRecord.attempts >= maxAttempts) {
             const failResult = recordFailedVerification(cleanPhone, clientIp);
             return res.status(429).json({
                 success: false,
@@ -357,11 +409,14 @@ async function verifyOtp(req, res) {
             { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
         );
 
+        const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
         const isProduction = process.env.NODE_ENV === "production";
+        const useSecure = Boolean(isProduction && isHttps);
+
         res.cookie("payment_token", token, {
             httpOnly: true,
-            secure: isProduction,
-            sameSite: isProduction ? "none" : "lax",
+            secure: useSecure,
+            sameSite: useSecure ? "none" : "lax",
             path: "/",
             maxAge: 24 * 60 * 60 * 1000
         });

@@ -50,11 +50,20 @@ async function initDb() {
 initDb();
 
 const parseAllowedOrigins = () => {
+    const defaultOrigins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:5000",
+        "http://127.0.0.1:5000"
+    ];
     const raw = process.env.FRONTEND_URL || "";
-    return raw
+    const configured = raw
         .split(",")
         .map(o => o.trim().replace(/\/+$/, ""))
         .filter(Boolean);
+    return [...new Set([...defaultOrigins, ...configured])];
 };
 
 app.use(cors({

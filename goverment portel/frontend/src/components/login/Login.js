@@ -86,7 +86,7 @@ export default function MandiLogin() {
     try {
       const res = await verifyOtpAPI(phone.trim().replace(/\D/g, ""), cleanOtp);
       if (res && res.success) {
-        setStatus({ loading: false, error: '', success: 'Authentication successful! Redirecting...' });
+        setStatus({ loading: true, error: '', success: 'Authentication successful! Redirecting...' });
         setTimeout(() => {
           navigate("/");
         }, 300);

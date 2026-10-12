@@ -12,7 +12,7 @@ const {
     recordSuccessfulVerification
 } = require("../services/securityStore");
 
-const MAX_OTP_ATTEMPTS = 5;
+const getSecurityMaxAttempts = () => parseInt(process.env.LOGIN_MAX_FAILED_ATTEMPTS, 10) || 5;
 const OTP_EXPIRY_MINUTES = 5;
 
 const isValidAadhaar = (aadhaar) => {
@@ -30,10 +30,11 @@ const isValidMobile = (mobile) => {
 const requestOtp = async (req, res) => {
     try {
         const clientIp = getClientIp(req);
-        const { aadhaar, mobile } = req.body;
+        const rawMobile = req.body.phone_number || req.body.mobile;
+        const aadhaar = req.body.aadhaar;
 
         // 1 & 2. Validate input format
-        if (!isValidAadhaar(aadhaar) || !isValidMobile(mobile)) {
+        if (!isValidAadhaar(aadhaar) || !isValidMobile(rawMobile)) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid Aadhaar or mobile number"
@@ -41,7 +42,7 @@ const requestOtp = async (req, res) => {
         }
 
         const cleanAadhaar = String(aadhaar).trim();
-        const cleanMobile = normalizePhoneNumber(mobile);
+        const cleanMobile = normalizePhoneNumber(rawMobile);
 
         if (!cleanMobile) {
             return res.status(400).json({
@@ -157,17 +158,19 @@ const requestOtp = async (req, res) => {
 const verifyOtp = async (req, res) => {
     try {
         const clientIp = getClientIp(req);
-        const { aadhaar, mobile, otp } = req.body;
+        const rawMobile = req.body.phone_number || req.body.mobile;
+        const aadhaar = req.body.aadhaar;
+        const otp = req.body.otp;
 
         // 1. Validate input
-        if (!aadhaar || !mobile || !otp) {
+        if (!aadhaar || !rawMobile || !otp) {
             return res.status(400).json({
                 success: false,
                 message: "Aadhaar, mobile, and OTP are required"
             });
         }
 
-        if (!isValidAadhaar(aadhaar) || !isValidMobile(mobile)) {
+        if (!isValidAadhaar(aadhaar) || !isValidMobile(rawMobile)) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid Aadhaar or mobile number"
@@ -175,7 +178,7 @@ const verifyOtp = async (req, res) => {
         }
 
         const cleanAadhaar = String(aadhaar).trim();
-        const cleanMobile = normalizePhoneNumber(mobile);
+        const cleanMobile = normalizePhoneNumber(rawMobile);
         const cleanOtp = String(otp).trim();
 
         if (!cleanMobile || !/^\d{6}$/.test(cleanOtp)) {
@@ -259,21 +262,13 @@ const verifyOtp = async (req, res) => {
             });
         }
 
-        // 4. Retrieve latest unverified OTP for this farmer from PRIMARY
+        // 4. Retrieve latest OTP for this farmer from PRIMARY
         const [otpRecords] = await writeDb.query(
-            "SELECT otp_id, farmer_id, otp_hash, expires_at, attempts, verified FROM farmer_login_otp WHERE farmer_id = ? AND verified = FALSE ORDER BY created_at DESC, otp_id DESC LIMIT 1",
+            "SELECT otp_id, farmer_id, otp_hash, expires_at, attempts, verified FROM farmer_login_otp WHERE farmer_id = ? ORDER BY otp_id DESC LIMIT 1",
             [farmer.farmer_id]
         );
 
         if (otpRecords.length === 0) {
-            const failResult = recordFailedVerification(cleanMobile, clientIp);
-            if (failResult.isLockedOut) {
-                return res.status(429).json({
-                    success: false,
-                    message: "Too many requests. Please try again later.",
-                    retry_after: failResult.retryAfterSeconds
-                });
-            }
             return res.status(400).json({
                 success: false,
                 message: "Unable to verify the OTP. Please check the code and try again."
@@ -281,18 +276,51 @@ const verifyOtp = async (req, res) => {
         }
 
         const otpRecord = otpRecords[0];
-
-        // 5. Check expiry
         const now = new Date();
-        if (new Date(otpRecord.expires_at) < now) {
-            const failResult = recordFailedVerification(cleanMobile, clientIp);
-            if (failResult.isLockedOut) {
-                return res.status(429).json({
-                    success: false,
-                    message: "Too many requests. Please try again later.",
-                    retry_after: failResult.retryAfterSeconds
+        const maxAttempts = getSecurityMaxAttempts();
+
+        // Check if this is a duplicate request of an already-verified valid OTP
+        if (otpRecord.verified) {
+            const isOtpMatch = await bcrypt.compare(cleanOtp, otpRecord.otp_hash);
+            if (isOtpMatch && now < new Date(otpRecord.expires_at)) {
+                const token = jwt.sign(
+                    { farmer_id: farmer.farmer_id },
+                    process.env.JWT_SECRET,
+                    { expiresIn: "24h" }
+                );
+
+                const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
+                const isProduction = process.env.NODE_ENV === "production";
+                const useSecure = Boolean(isProduction && isHttps);
+
+                const cookieOptions = {
+                    httpOnly: true,
+                    secure: useSecure,
+                    sameSite: useSecure ? "none" : "lax",
+                    path: "/",
+                    maxAge: 24 * 60 * 60 * 1000
+                };
+                res.cookie("token", token, cookieOptions);
+                res.cookie("farmer_token", token, cookieOptions);
+
+                return res.status(200).json({
+                    success: true,
+                    message: "Login successful",
+                    farmer: {
+                        farmer_id: farmer.farmer_id,
+                        name: farmer.name
+                    }
                 });
             }
+
+            return res.status(400).json({
+                success: false,
+                message: "Unable to verify the OTP. Please check the code and try again."
+            });
+        }
+
+        // 5. Check expiry
+        if (new Date(otpRecord.expires_at) < now) {
             return res.status(400).json({
                 success: false,
                 message: "Unable to verify the OTP. Please check the code and try again."
@@ -300,7 +328,7 @@ const verifyOtp = async (req, res) => {
         }
 
         // 6. Check maximum attempts
-        if (otpRecord.attempts >= MAX_OTP_ATTEMPTS) {
+        if (otpRecord.attempts >= maxAttempts) {
             const failResult = recordFailedVerification(cleanMobile, clientIp);
             return res.status(429).json({
                 success: false,
@@ -385,8 +413,6 @@ const verifyOtp = async (req, res) => {
             });
         }
 
-
-
         // Create JWT containing only the minimum required farmer_id payload
         const token = jwt.sign(
             { farmer_id: farmer.farmer_id },
@@ -394,15 +420,20 @@ const verifyOtp = async (req, res) => {
             { expiresIn: "24h" }
         );
 
-        // Store JWT in HttpOnly cookie named farmer_token
+        // Store JWT in HttpOnly cookie named token (and farmer_token for compatibility)
+        const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
         const isProduction = process.env.NODE_ENV === "production";
-        res.cookie("farmer_token", token, {
+        const useSecure = Boolean(isProduction && isHttps);
+
+        const cookieOptions = {
             httpOnly: true,
-            secure: isProduction,
-            sameSite: isProduction ? "none" : "lax",
+            secure: useSecure,
+            sameSite: useSecure ? "none" : "lax",
             path: "/",
             maxAge: 24 * 60 * 60 * 1000
-        });
+        };
+        res.cookie("token", token, cookieOptions);
+        res.cookie("farmer_token", token, cookieOptions);
 
         // Return successful login response without exposing JWT or Aadhaar in body
         return res.status(200).json({
@@ -424,15 +455,18 @@ const verifyOtp = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
+        const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
         const isProduction = process.env.NODE_ENV === "production";
+        const useSecure = Boolean(isProduction && isHttps);
+
         const clearOptions = {
             httpOnly: true,
-            secure: isProduction,
-            sameSite: isProduction ? "none" : "lax",
+            secure: useSecure,
+            sameSite: useSecure ? "none" : "lax",
             path: "/"
         };
-        res.clearCookie("farmer_token", clearOptions);
         res.clearCookie("token", clearOptions);
+        res.clearCookie("farmer_token", clearOptions);
 
         return res.status(200).json({
             success: true,
