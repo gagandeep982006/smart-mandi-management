@@ -34,7 +34,6 @@ const parseAllowedOrigins = () => {
     return [...new Set([...defaultOrigins, ...configured])];
 };
 
-// 1. CORS Configuration with Credentials
 app.use(
     cors({
         origin: function (origin, callback) {
@@ -55,16 +54,13 @@ app.use(
     })
 );
 
-// 2. Middlewares (supports base64 screenshot upload up to 50MB)
 app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Database Readiness State
 let isDatabaseReady = false;
 let databaseInitError = null;
 
-// 3. Health Check
 app.get(["/health", "/api/health"], (req, res) => {
     if (isDatabaseReady) {
         return res.status(200).json({
@@ -86,7 +82,6 @@ app.get(["/health", "/api/health"], (req, res) => {
     });
 });
 
-// Guard middleware for database-dependent API routes
 app.use("/api", (req, res, next) => {
     if (req.path === "/health") return next();
 
@@ -94,20 +89,17 @@ app.use("/api", (req, res, next) => {
         return res.status(503).json({
             success: false,
             error: "DATABASE_UNAVAILABLE",
-            message: "Database connection is not available. Please verify Aiven MySQL status and environment variables.",
-            details: databaseInitError ? databaseInitError.message : "Database initialization pending"
+            message: "Database is down. Please try again later."
         });
     }
     next();
 });
 
-// 4. API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/locations", locationRoutes);
 
-// 5. 404 Handler
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -115,7 +107,6 @@ app.use((req, res) => {
     });
 });
 
-// 6. Centralized Error Handler
 app.use((err, req, res, next) => {
     console.error("[Global Error Handler]:", err);
     const status = err.statusCode || 500;
@@ -125,7 +116,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 7. Start Server and Initialize Database Connections
 const server = app.listen(PORT, () => {
     console.log(`====================================================`);
     console.log(` Payment Portal Backend running on http://localhost:${PORT}`);
@@ -135,7 +125,6 @@ const server = app.listen(PORT, () => {
 
 async function initBackendServices() {
     try {
-        // Connect MongoDB for Audit Logs
         try {
             const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/farmer_history";
             await mongoose.connect(mongoUri);
@@ -144,10 +133,8 @@ async function initBackendServices() {
             console.warn("[MongoDB] Connection warning:", mongoErr.message);
         }
 
-        // Verify MySQL Primary & Secondary DBs
         await verifyDatabaseConnections();
 
-        // Ensure Payment Portal tables exist on Primary
         await initializePaymentTables();
 
         isDatabaseReady = true;

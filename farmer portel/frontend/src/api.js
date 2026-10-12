@@ -2,9 +2,6 @@ import { topLoader } from './utils/topLoader';
 
 const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/+$/, "");
 
-/**
- * Universal fetch wrapper with credentials: "include" and topLoader tracking
- */
 export async function apiFetch(endpoint, options = {}) {
     topLoader.requestStarted();
     try {
@@ -31,7 +28,10 @@ export async function apiFetch(endpoint, options = {}) {
         }
 
         if (!response.ok) {
-            throw new Error(data.message || `Request failed with status ${response.status}`);
+            const error = new Error(data?.message || `Request failed with status ${response.status}`);
+            error.data = data;
+            error.status = response.status;
+            throw error;
         }
 
         return data;
@@ -40,7 +40,6 @@ export async function apiFetch(endpoint, options = {}) {
     }
 }
 
-// Authentication APIs
 export const authApi = {
     requestOtp: (aadhaar, mobile) => apiFetch("/api/auth/request-otp", {
         method: "POST",
@@ -56,7 +55,6 @@ export const authApi = {
     getMe: () => apiFetch("/api/auth/me")
 };
 
-// Farmer Portal APIs
 export const farmerApi = {
     getProfile: () => apiFetch("/api/farmer/profile"),
     getLand: () => apiFetch("/api/farmer/land"),

@@ -15,14 +15,18 @@ import {
 import CircularLoader from './CircularLoader';
 
 export default function LoginScreen({ onLoginSuccess }) {
-  const [step, setStep] = useState(1); // 1: Aadhaar + Mobile, 2: OTP
+  const [step, setStep] = useState(1); 
   const [aadhaar, setAadhaar] = useState('');
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [timer, setTimer] = useState(300); // 5 mins in seconds
+  const [timer, setTimer] = useState(300); 
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [remainingAttempts, setRemainingAttempts] = useState(null);
+  const [maxAttempts, setMaxAttempts] = useState(null);
+  const [isLocked, setIsLocked] = useState(false);
 
   useEffect(() => {
     let interval = null;
@@ -34,12 +38,28 @@ export default function LoginScreen({ onLoginSuccess }) {
     return () => clearInterval(interval);
   }, [step, timer]);
 
+  useEffect(() => {
+    let interval = null;
+    if (cooldownSeconds > 0) {
+      interval = setInterval(() => {
+        setCooldownSeconds((prev) => {
+          if (prev <= 1) {
+            setIsLocked(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [cooldownSeconds]);
+
   const handleRequestOtp = async (e) => {
     e.preventDefault();
+    if (cooldownSeconds > 0) return;
     setError('');
     setSuccessMsg('');
 
-    // Client-side validations
     const cleanAadhaar = aadhaar.trim();
     const cleanMobile = mobile.trim();
 
@@ -60,14 +80,28 @@ export default function LoginScreen({ onLoginSuccess }) {
         setStep(2);
         setTimer(300);
         setSuccessMsg(res.message || 'OTP has been dispatched to your mobile number.');
+        if (res.remaining_attempts !== undefined) setRemainingAttempts(res.remaining_attempts);
+        if (res.max_attempts !== undefined) setMaxAttempts(res.max_attempts);
         const mockOtp = res.otp || res.mock_otp || res.data?.otp;
         if (mockOtp) {
           setOtp(String(mockOtp));
         }
       } else {
         setError(res.message || 'Failed to request OTP');
+        if (res.retry_after || res.cooldown_seconds) {
+          setCooldownSeconds(res.cooldown_seconds || res.retry_after);
+          setIsLocked(Boolean(res.is_locked));
+        }
       }
     } catch (err) {
+      const errData = err.data;
+      if (errData?.retry_after || errData?.cooldown_seconds) {
+        setCooldownSeconds(errData.cooldown_seconds || errData.retry_after);
+        setIsLocked(Boolean(errData.is_locked));
+      }
+      if (errData?.remaining_attempts !== undefined) {
+        setRemainingAttempts(errData.remaining_attempts);
+      }
       setError(err.message || 'Invalid Aadhaar or mobile number');
     } finally {
       setLoading(false);
@@ -76,6 +110,7 @@ export default function LoginScreen({ onLoginSuccess }) {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+    if (isLocked || cooldownSeconds > 0) return;
     setError('');
 
     const cleanOtp = otp.trim();
@@ -91,8 +126,25 @@ export default function LoginScreen({ onLoginSuccess }) {
         onLoginSuccess(res.farmer);
       } else {
         setError(res.message || 'Invalid or expired OTP');
+        if (res.remaining_attempts !== undefined) setRemainingAttempts(res.remaining_attempts);
+        if (res.max_attempts !== undefined) setMaxAttempts(res.max_attempts);
+        if (res.retry_after || res.cooldown_seconds) {
+          setCooldownSeconds(res.cooldown_seconds || res.retry_after);
+          setIsLocked(Boolean(res.is_locked));
+        }
       }
     } catch (err) {
+      const errData = err.data;
+      if (errData?.remaining_attempts !== undefined) {
+        setRemainingAttempts(errData.remaining_attempts);
+      }
+      if (errData?.max_attempts !== undefined) {
+        setMaxAttempts(errData.max_attempts);
+      }
+      if (errData?.retry_after || errData?.cooldown_seconds) {
+        setCooldownSeconds(errData.cooldown_seconds || errData.retry_after);
+        setIsLocked(Boolean(errData.is_locked));
+      }
       setError(err.message || 'Invalid or expired OTP');
     } finally {
       setLoading(false);
@@ -112,7 +164,6 @@ export default function LoginScreen({ onLoginSuccess }) {
       flexDirection: 'column',
       background: 'linear-gradient(180deg, #f0fdf4 0%, #f8fafc 100%)',
     }}>
-      {/* Top Gov Bar */}
       <div className="header-top">
         <span>
           <ShieldCheck size={14} /> Government of Haryana • Food, Civil Supplies & Consumer Affairs Department
@@ -136,7 +187,6 @@ export default function LoginScreen({ onLoginSuccess }) {
           border: '1px solid var(--gray-200)',
           overflow: 'hidden'
         }}>
-          {/* Card Header */}
           <div style={{
             background: 'var(--primary-gradient)',
             color: '#ffffff',
@@ -245,11 +295,29 @@ export default function LoginScreen({ onLoginSuccess }) {
                   </span>
                 </div>
 
+                {cooldownSeconds > 0 && (
+                  <div style={{
+                    background: '#fffbeb',
+                    border: '1px solid #fde68a',
+                    color: '#b45309',
+                    padding: '0.65rem 0.9rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <RefreshCw size={14} />
+                    <span>{isLocked ? 'Account locked. Cooldown remaining:' : 'Resend cooldown:'} <strong>{formatTimer(cooldownSeconds)}</strong></span>
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   className="btn btn-primary"
                   style={{ width: '100%', marginBottom: '1rem' }}
-                  disabled={loading || aadhaar.length !== 12 || mobile.length !== 10}
+                  disabled={loading || aadhaar.length !== 12 || mobile.length !== 10 || cooldownSeconds > 0}
                 >
                   {loading ? (
                     <>
@@ -343,23 +411,57 @@ export default function LoginScreen({ onLoginSuccess }) {
                   </div>
                 </div>
 
-                <div style={{
-                  background: '#fef3c7',
-                  border: '1px solid #fde68a',
-                  color: '#92400e',
-                  padding: '0.7rem 0.85rem',
-                  borderRadius: '8px',
-                  fontSize: '0.78rem',
-                  marginBottom: '1.25rem'
-                }}>
-                  <strong>Dev Mode Note:</strong> OTP is logged to the backend console terminal (look for <code>[DEV ONLY] OTP for mobile ...: XXXXXX</code>).
-                </div>
+                {remainingAttempts !== null && (
+                  <div style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: remainingAttempts <= 1 ? '#dc2626' : '#4b5563',
+                    marginBottom: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.4rem 0.6rem',
+                    background: '#f9fafb',
+                    borderRadius: '6px',
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    <span>Remaining Verification Attempts:</span>
+                    <span style={{
+                      background: remainingAttempts <= 1 ? '#fee2e2' : '#e0f2fe',
+                      color: remainingAttempts <= 1 ? '#b91c1c' : '#0369a1',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700
+                    }}>
+                      {remainingAttempts} {maxAttempts ? `/ ${maxAttempts}` : ''}
+                    </span>
+                  </div>
+                )}
+
+                {cooldownSeconds > 0 && (
+                  <div style={{
+                    background: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    color: '#b91c1c',
+                    padding: '0.65rem 0.9rem',
+                    borderRadius: '8px',
+                    fontSize: '0.825rem',
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <AlertCircle size={15} />
+                    <span>Account locked. Cooldown remaining: <strong>{formatTimer(cooldownSeconds)}</strong></span>
+                  </div>
+                )}
 
                 <button
                   type="submit"
                   className="btn btn-primary"
                   style={{ width: '100%', marginBottom: '0.75rem' }}
-                  disabled={loading || otp.length !== 6}
+                  disabled={loading || otp.length !== 6 || cooldownSeconds > 0}
                 >
                   {loading ? (
                     <>
@@ -385,7 +487,6 @@ export default function LoginScreen({ onLoginSuccess }) {
             )}
           </div>
 
-          {/* Footer note */}
           <div style={{
             background: 'var(--gray-50)',
             borderTop: '1px solid var(--gray-200)',

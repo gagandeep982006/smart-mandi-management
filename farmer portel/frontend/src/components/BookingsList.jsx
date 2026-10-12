@@ -4,14 +4,10 @@ import { formatIndianTime, formatIndianDate } from '../utils/dateUtils';
 import { 
   CalendarCheck2, 
   Clock, 
-  MapPin, 
   Ticket, 
   CreditCard, 
   AlertCircle, 
-  RefreshCw, 
-  Filter, 
   Search,
-  CheckCircle2
 } from 'lucide-react';
 import CircularLoader from './CircularLoader';
 

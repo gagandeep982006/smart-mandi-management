@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -9,17 +9,19 @@ export default function Login() {
     const toast = useToast();
     const navigate = useNavigate();
 
-    // OTP states
-    const [step, setStep] = useState(1); // 1: phone, 2: OTP
+    const [step, setStep] = useState(1); 
     const [phone, setPhone] = useState("");
     const [otp, setOtp] = useState("");
-    const [timer, setTimer] = useState(300); // 5 mins in seconds
+    const [timer, setTimer] = useState(300); 
     const [canResend, setCanResend] = useState(false);
+    const [cooldownSeconds, setCooldownSeconds] = useState(0);
+    const [remainingAttempts, setRemainingAttempts] = useState(null);
+    const [maxAttempts, setMaxAttempts] = useState(null);
+    const [isLocked, setIsLocked] = useState(false);
 
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
-    // Timer effect for Step 2
     useEffect(() => {
         let interval = null;
         if (step === 2 && timer > 0) {
@@ -32,9 +34,25 @@ export default function Login() {
         return () => clearInterval(interval);
     }, [step, timer]);
 
-    // Step 1: Request OTP
+    useEffect(() => {
+        let interval = null;
+        if (cooldownSeconds > 0) {
+            interval = setInterval(() => {
+                setCooldownSeconds((prev) => {
+                    if (prev <= 1) {
+                        setIsLocked(false);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [cooldownSeconds]);
+
     const handleRequestOtp = async (e) => {
         e.preventDefault();
+        if (cooldownSeconds > 0) return;
         setError(null);
 
         const cleanPhone = phone.trim().replace(/\D/g, "");
@@ -50,6 +68,8 @@ export default function Login() {
                 setStep(2);
                 setTimer(300);
                 setCanResend(false);
+                if (res.remaining_attempts !== undefined) setRemainingAttempts(res.remaining_attempts);
+                if (res.max_attempts !== undefined) setMaxAttempts(res.max_attempts);
                 const mockOtp = res.otp || res.mock_otp || res.data?.otp;
                 if (mockOtp) {
                     setOtp(String(mockOtp));
@@ -57,17 +77,29 @@ export default function Login() {
                 toast.success(res.message || "OTP sent to your registered mobile number");
             } else {
                 setError(res?.message || "Failed to request OTP. Please verify your registered number.");
+                if (res?.retry_after || res?.cooldown_seconds) {
+                    setCooldownSeconds(res.cooldown_seconds || res.retry_after);
+                    setIsLocked(Boolean(res.is_locked));
+                }
             }
         } catch (err) {
+            const errData = err.data;
+            if (errData?.retry_after || errData?.cooldown_seconds) {
+                setCooldownSeconds(errData.cooldown_seconds || errData.retry_after);
+                setIsLocked(Boolean(errData.is_locked));
+            }
+            if (errData?.remaining_attempts !== undefined) {
+                setRemainingAttempts(errData.remaining_attempts);
+            }
             setError(err.message || "Failed to request OTP. Please try again.");
         } finally {
             setSubmitting(false);
         }
     };
 
-    // Step 2: Verify OTP
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
+        if (isLocked || cooldownSeconds > 0) return;
         setError(null);
 
         const cleanOtp = otp.trim();
@@ -85,17 +117,34 @@ export default function Login() {
                 navigate("/");
             } else {
                 setError(res?.message || "Invalid OTP. Please check and try again.");
+                if (res?.remaining_attempts !== undefined) setRemainingAttempts(res.remaining_attempts);
+                if (res?.max_attempts !== undefined) setMaxAttempts(res.max_attempts);
+                if (res?.retry_after || res?.cooldown_seconds) {
+                    setCooldownSeconds(res.cooldown_seconds || res.retry_after);
+                    setIsLocked(Boolean(res.is_locked));
+                }
             }
         } catch (err) {
+            const errData = err.data;
+            if (errData?.remaining_attempts !== undefined) {
+                setRemainingAttempts(errData.remaining_attempts);
+            }
+            if (errData?.max_attempts !== undefined) {
+                setMaxAttempts(errData.max_attempts);
+            }
+            if (errData?.retry_after || errData?.cooldown_seconds) {
+                setCooldownSeconds(errData.cooldown_seconds || errData.retry_after);
+                setIsLocked(Boolean(errData.is_locked));
+            }
             setError(err.message || "OTP verification failed. Please try again.");
         } finally {
             setSubmitting(false);
         }
     };
 
-    // Resend OTP
     const handleResendOtp = async () => {
         if (!canResend && timer > 270) return;
+        if (cooldownSeconds > 0) return;
         setError(null);
         setSubmitting(true);
         try {
@@ -104,6 +153,8 @@ export default function Login() {
             if (res && res.success) {
                 setTimer(300);
                 setCanResend(false);
+                if (res.remaining_attempts !== undefined) setRemainingAttempts(res.remaining_attempts);
+                if (res.max_attempts !== undefined) setMaxAttempts(res.max_attempts);
                 const mockOtp = res.otp || res.mock_otp || res.data?.otp;
                 if (mockOtp) {
                     setOtp(String(mockOtp));
@@ -113,8 +164,20 @@ export default function Login() {
                 toast.success("New OTP sent successfully");
             } else {
                 setError(res?.message || "Failed to resend OTP");
+                if (res?.retry_after || res?.cooldown_seconds) {
+                    setCooldownSeconds(res.cooldown_seconds || res.retry_after);
+                    setIsLocked(Boolean(res.is_locked));
+                }
             }
         } catch (err) {
+            const errData = err.data;
+            if (errData?.retry_after || errData?.cooldown_seconds) {
+                setCooldownSeconds(errData.cooldown_seconds || errData.retry_after);
+                setIsLocked(Boolean(errData.is_locked));
+            }
+            if (errData?.remaining_attempts !== undefined) {
+                setRemainingAttempts(errData.remaining_attempts);
+            }
             setError(err.message || "Failed to resend OTP");
         } finally {
             setSubmitting(false);
@@ -148,7 +211,6 @@ export default function Login() {
                 padding: "36px 32px",
                 position: "relative"
             }}>
-                {/* Branding Header */}
                 <div style={{ textAlign: "center", marginBottom: "24px" }}>
                     <div style={{
                         width: "56px",
@@ -172,7 +234,6 @@ export default function Login() {
                     </p>
                 </div>
 
-                {/* Form Title */}
                 <div style={{ marginBottom: "16px" }}>
                     <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--text-main)" }}>
                         Mobile OTP Authentication
@@ -182,7 +243,6 @@ export default function Login() {
                     </p>
                 </div>
 
-                {/* Error Banner */}
                 {error && (
                     <div className="alert alert-danger" style={{ marginBottom: "20px" }}>
                         <AlertCircle size={18} style={{ flexShrink: 0 }} />
@@ -190,7 +250,6 @@ export default function Login() {
                     </div>
                 )}
 
-                {/* OTP Mode Form */}
                 {step === 1 ? (
                     <form onSubmit={handleRequestOtp}>
                         <div className="form-group" style={{ marginBottom: "20px" }}>
@@ -219,11 +278,29 @@ export default function Login() {
                             </small>
                         </div>
 
+                        {cooldownSeconds > 0 && (
+                            <div style={{
+                                background: '#fffbeb',
+                                border: '1px solid #fde68a',
+                                color: '#b45309',
+                                padding: '0.65rem 0.9rem',
+                                borderRadius: '8px',
+                                fontSize: '0.825rem',
+                                marginBottom: '1rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                            }}>
+                                <RefreshCw size={14} />
+                                <span>{isLocked ? 'Account locked. Cooldown remaining:' : 'Resend cooldown:'} <strong>{formatTimer(cooldownSeconds)}</strong></span>
+                            </div>
+                        )}
+
                         <button
                             type="submit"
                             className="btn btn-primary"
                             style={{ width: "100%", padding: "11px", fontSize: "0.95rem", gap: "8px" }}
-                            disabled={submitting || phone.length !== 10}
+                            disabled={submitting || phone.length !== 10 || cooldownSeconds > 0}
                         >
                             {submitting ? (
                                 <>
@@ -256,7 +333,7 @@ export default function Login() {
                                 <strong style={{ color: "var(--text-main)" }}>+91 {phone}</strong>
                             </div>
                             <button
-                                type="button"
+                                type="submit"
                                 onClick={() => {
                                     setStep(1);
                                     setOtp("");
@@ -303,7 +380,6 @@ export default function Login() {
                             />
                         </div>
 
-                        {/* Timer & Resend */}
                         <div style={{
                             display: "flex",
                             justifyContent: "space-between",
@@ -341,11 +417,57 @@ export default function Login() {
                             </button>
                         </div>
 
+                        {remainingAttempts !== null && (
+                            <div style={{
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                                color: remainingAttempts <= 1 ? '#dc2626' : '#4b5563',
+                                marginBottom: '0.75rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '0.4rem 0.6rem',
+                                background: '#f9fafb',
+                                borderRadius: '6px',
+                                border: '1px solid #e5e7eb'
+                            }}>
+                                <span>Remaining Verification Attempts:</span>
+                                <span style={{
+                                    background: remainingAttempts <= 1 ? '#fee2e2' : '#e0f2fe',
+                                    color: remainingAttempts <= 1 ? '#b91c1c' : '#0369a1',
+                                    padding: '2px 8px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700
+                                }}>
+                                    {remainingAttempts} {maxAttempts ? `/ ${maxAttempts}` : ''}
+                                </span>
+                            </div>
+                        )}
+
+                        {cooldownSeconds > 0 && (
+                            <div style={{
+                                background: '#fee2e2',
+                                border: '1px solid #fecaca',
+                                color: '#b91c1c',
+                                padding: '0.65rem 0.9rem',
+                                borderRadius: '8px',
+                                fontSize: '0.825rem',
+                                marginBottom: '1rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                            }}>
+                                <AlertCircle size={15} />
+                                <span>Account locked. Cooldown remaining: <strong>{formatTimer(cooldownSeconds)}</strong></span>
+                            </div>
+                        )}
+
                         <button
                             type="submit"
                             className="btn btn-primary"
                             style={{ width: "100%", padding: "11px", fontSize: "0.95rem", gap: "8px" }}
-                            disabled={submitting || otp.length !== 6}
+                            disabled={submitting || otp.length !== 6 || cooldownSeconds > 0}
                         >
                             {submitting ? (
                                 <>
@@ -362,7 +484,6 @@ export default function Login() {
                     </form>
                 )}
 
-                {/* Footer Security Badge */}
                 <div style={{
                     marginTop: "20px",
                     textAlign: "center",

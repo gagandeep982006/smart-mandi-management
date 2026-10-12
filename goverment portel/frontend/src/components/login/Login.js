@@ -7,12 +7,15 @@ export default function MandiLogin() {
   const navigate = useNavigate();
   const { requestOtpAPI, verifyOtpAPI } = useContext(AuthContext);
 
-  // Step 1: Phone input; Step 2: OTP verification
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [timer, setTimer] = useState(300); // 5 minutes in seconds
+  const [timer, setTimer] = useState(300); 
   const [canResend, setCanResend] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [remainingAttempts, setRemainingAttempts] = useState(null);
+  const [maxAttempts, setMaxAttempts] = useState(null);
+  const [isLocked, setIsLocked] = useState(false);
 
   const [status, setStatus] = useState({
     loading: false,
@@ -20,7 +23,6 @@ export default function MandiLogin() {
     success: ''
   });
 
-  // Countdown timer for Step 2
   useEffect(() => {
     let interval = null;
     if (step === 2 && timer > 0) {
@@ -33,9 +35,25 @@ export default function MandiLogin() {
     return () => clearInterval(interval);
   }, [step, timer]);
 
-  // Step 1: Request OTP
+  useEffect(() => {
+    let interval = null;
+    if (cooldownSeconds > 0) {
+      interval = setInterval(() => {
+        setCooldownSeconds((prev) => {
+          if (prev <= 1) {
+            setIsLocked(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [cooldownSeconds]);
+
   const handleRequestOtp = async (e) => {
     e.preventDefault();
+    if (cooldownSeconds > 0) return;
     const cleanPhone = phone.trim().replace(/\D/g, "");
 
     if (!cleanPhone || cleanPhone.length !== 10) {
@@ -46,11 +64,12 @@ export default function MandiLogin() {
     setStatus({ loading: true, error: '', success: '' });
     try {
       const res = await requestOtpAPI(cleanPhone);
-      console.log(res)
       if (res && res.success) {
         setStep(2);
         setTimer(300);
         setCanResend(false);
+        if (res.remaining_attempts !== undefined) setRemainingAttempts(res.remaining_attempts);
+        if (res.max_attempts !== undefined) setMaxAttempts(res.max_attempts);
         const mockOtp = res.otp || res.mock_otp || res.data?.otp;
         if (mockOtp) {
           setOtp(String(mockOtp));
@@ -61,6 +80,10 @@ export default function MandiLogin() {
           success: res.message || 'OTP dispatched to registered mobile number.'
         });
       } else {
+        if (res?.retry_after || res?.cooldown_seconds) {
+          setCooldownSeconds(res.cooldown_seconds || res.retry_after);
+          setIsLocked(Boolean(res.is_locked));
+        }
         setStatus({
           loading: false,
           error: res?.message || 'Failed to dispatch OTP. Please verify your registered number.',
@@ -72,9 +95,9 @@ export default function MandiLogin() {
     }
   };
 
-  // Step 2: Verify OTP
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+    if (isLocked || cooldownSeconds > 0) return;
     const cleanOtp = otp.trim();
 
     if (!cleanOtp || cleanOtp.length !== 6 || !/^\d{6}$/.test(cleanOtp)) {
@@ -91,6 +114,12 @@ export default function MandiLogin() {
           navigate("/");
         }, 300);
       } else {
+        if (res?.remaining_attempts !== undefined) setRemainingAttempts(res.remaining_attempts);
+        if (res?.max_attempts !== undefined) setMaxAttempts(res.max_attempts);
+        if (res?.retry_after || res?.cooldown_seconds) {
+          setCooldownSeconds(res.cooldown_seconds || res.retry_after);
+          setIsLocked(Boolean(res.is_locked));
+        }
         setStatus({
           loading: false,
           error: res?.message || 'Invalid or expired OTP. Please try again.',
@@ -102,15 +131,17 @@ export default function MandiLogin() {
     }
   };
 
-  // Resend OTP
   const handleResendOtp = async () => {
     if (!canResend && timer > 270) return;
+    if (cooldownSeconds > 0) return;
     setStatus({ loading: true, error: '', success: '' });
     try {
       const res = await requestOtpAPI(phone.trim().replace(/\D/g, ""));
       if (res && res.success) {
         setTimer(300);
         setCanResend(false);
+        if (res.remaining_attempts !== undefined) setRemainingAttempts(res.remaining_attempts);
+        if (res.max_attempts !== undefined) setMaxAttempts(res.max_attempts);
         const mockOtp = res.otp || res.mock_otp || res.data?.otp;
         if (mockOtp) {
           setOtp(String(mockOtp));
@@ -123,6 +154,10 @@ export default function MandiLogin() {
           success: 'A new 6-digit OTP has been dispatched to your mobile.'
         });
       } else {
+        if (res?.retry_after || res?.cooldown_seconds) {
+          setCooldownSeconds(res.cooldown_seconds || res.retry_after);
+          setIsLocked(Boolean(res.is_locked));
+        }
         setStatus({
           loading: false,
           error: res?.message || 'Could not resend OTP.',
@@ -142,7 +177,6 @@ export default function MandiLogin() {
 
   return (
     <div className="gov-login-container">
-      {/* Top National Identity Strip */}
       <div className="gov-tricolor-strip">
         <span className="strip-saffron"></span>
         <span className="strip-white"></span>
@@ -150,7 +184,6 @@ export default function MandiLogin() {
       </div>
 
       <div className="gov-card">
-        {/* Portal Header */}
         <header className="gov-header">
           <div className="gov-emblem-badge">🌾</div>
           <h1 className="gov-portal-title">Government Portal</h1>
@@ -160,7 +193,6 @@ export default function MandiLogin() {
           </p>
         </header>
 
-        {/* Form Section */}
         <main className="gov-form-wrapper">
           <div style={{ marginBottom: '16px' }}>
             <h2 className="gov-form-heading" style={{ margin: 0 }}>
@@ -171,7 +203,6 @@ export default function MandiLogin() {
             </p>
           </div>
 
-          {/* Feedback Alerts */}
           {status.error && (
             <div className="gov-alert gov-alert-danger" role="alert" style={{ marginBottom: '16px' }}>
               <span className="alert-icon">⚠️</span>
@@ -197,9 +228,7 @@ export default function MandiLogin() {
             </div>
           )}
 
-          {/* OTP Mode Form */}
           {step === 1 ? (
-            /* Step 1: Phone number */
             <form onSubmit={handleRequestOtp} noValidate>
               <div className="gov-form-group">
                 <label htmlFor="phone">
@@ -243,16 +272,33 @@ export default function MandiLogin() {
                 </div>
               </div>
 
+              {cooldownSeconds > 0 && (
+                <div style={{
+                  background: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  color: '#b45309',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <span>⏳</span>
+                  <span>{isLocked ? 'Account locked. Cooldown remaining:' : 'Resend cooldown:'} <strong>{formatTimer(cooldownSeconds)}</strong></span>
+                </div>
+              )}
+
               <button
                 type="submit"
                 className="gov-btn-submit"
-                disabled={status.loading || phone.length !== 10}
+                disabled={status.loading || phone.length !== 10 || cooldownSeconds > 0}
               >
                 {status.loading ? 'Requesting OTP...' : 'Send OTP via SMS'}
               </button>
             </form>
           ) : (
-            /* Step 2: OTP verification */
             <form onSubmit={handleVerifyOtp} noValidate>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', fontSize: '0.85rem' }}>
                 <span style={{ color: '#4a5568' }}>
@@ -296,7 +342,6 @@ export default function MandiLogin() {
                 />
               </div>
 
-              {/* Timer & Resend */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '14px 0', fontSize: '0.8rem' }}>
                 <span style={{ color: timer > 0 ? '#4a5568' : '#e53e3e' }}>
                   {timer > 0 ? `Expires in ${formatTimer(timer)}` : 'OTP Expired'}
@@ -317,18 +362,63 @@ export default function MandiLogin() {
                 </button>
               </div>
 
-              <button
-                type="submit"
-                className="gov-btn-submit"
-                disabled={status.loading || otp.length !== 6}
-              >
-                {status.loading ? 'Verifying OTP...' : 'Verify & Enter Portal'}
-              </button>
+                {remainingAttempts !== null && (
+                  <div style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: remainingAttempts <= 1 ? '#dc2626' : '#4b5563',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '6px 10px',
+                    background: '#f8fafc',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <span>Remaining Verification Attempts:</span>
+                    <span style={{
+                      background: remainingAttempts <= 1 ? '#fee2e2' : '#e0f2fe',
+                      color: remainingAttempts <= 1 ? '#b91c1c' : '#0369a1',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700
+                    }}>
+                      {remainingAttempts} {maxAttempts ? `/ ${maxAttempts}` : ''}
+                    </span>
+                  </div>
+                )}
+
+                {cooldownSeconds > 0 && (
+                  <div style={{
+                    background: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    color: '#b91c1c',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.8rem',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <span>⚠️</span>
+                    <span>Account locked. Cooldown remaining: <strong>{formatTimer(cooldownSeconds)}</strong></span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="gov-btn-submit"
+                  disabled={status.loading || otp.length !== 6 || cooldownSeconds > 0}
+                >
+                  {status.loading ? 'Verifying OTP...' : 'Verify & Enter Portal'}
+                </button>
             </form>
           )}
         </main>
 
-        {/* Security & Disclaimer Footer */}
         <footer className="gov-footer">
           <p className="gov-security-text">
             🔒 Authorized Government Personnel Only. 6-digit OTP verification enforced.

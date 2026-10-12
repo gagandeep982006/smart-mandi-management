@@ -13,9 +13,6 @@ function createPool(prefix) {
     const password = process.env[`${prefix}_PASSWORD`];
     const database = process.env[`${prefix}_NAME`];
 
-    // TLS/SSL configuration: Aiven MySQL requires SSL/TLS.
-    // By default, enable TLS with rejectUnauthorized: false for secure connection
-    // without requiring bundled CA certs, unless explicitly disabled.
     const sslDisabled = process.env[`${prefix}_SSL`] === "false" || process.env.DB_SSL === "false";
     const ssl = sslDisabled
         ? undefined
@@ -70,7 +67,6 @@ function initDatabaseRouter() {
         }
     ];
 
-    // Filter only running secondary databases
     const runningDatabases = secondaryDatabases.filter(
         item => item.db && item.status === "RUNNING"
     );
@@ -80,7 +76,6 @@ function initDatabaseRouter() {
         selectedReadDatabase = primaryDB;
         selectedReadDatabaseName = "PRIMARY (fallback)";
     } else {
-        // Randomly select one RUNNING secondary once at startup
         const randomIndex = Math.floor(Math.random() * runningDatabases.length);
         const selected = runningDatabases[randomIndex];
         selectedReadDatabase = selected.db;
@@ -95,7 +90,6 @@ function initDatabaseRouter() {
     };
 }
 
-// Initialize on module load
 initDatabaseRouter();
 
 function getWriteDatabase() {
@@ -132,27 +126,23 @@ async function verifyDatabaseConnections() {
         throw new Error("PRIMARY_DB_HOST environment variable is not defined.");
     }
 
-    // Safe diagnostic logging (never log passwords)
     console.log(`[DB Router] Verifying Primary Database connection...`);
     console.log(`[DB Router] Host: ${primaryHost}, Port: ${primaryPort}, User: ${primaryUser}, Database: ${primaryDbName}`);
 
-    // Pre-flight DNS diagnostic check for remote hosts
     if (primaryHost !== "localhost" && primaryHost !== "127.0.0.1") {
         const dnsCheck = await checkHostDns(primaryHost);
         if (!dnsCheck.ok) {
             console.error(`\n================================================================================`);
-            console.error(`[DB Router] CRITICAL: DNS RESOLUTION FAILED FOR AIVEN DATABASE`);
+            console.error(`[DB Router] CRITICAL: DNS RESOLUTION FAILED FOR DATABASE`);
             console.error(`[DB Router] Hostname : ${primaryHost}`);
             console.error(`[DB Router] Error    : getaddrinfo ${dnsCheck.error}`);
             console.error(`[DB Router] Root Cause: The hostname does not exist in DNS (NXDOMAIN).`);
-            console.error(`[DB Router] Possible reasons on Aiven:`);
-            console.error(`  1. The Aiven service is POWERED OFF / STOPPED.`);
-            console.error(`     -> Aiven automatically removes DNS records for powered-off services.`);
-            console.error(`     -> Fix: Go to Aiven Console (https://console.aiven.io), open your MySQL service,`);
-            console.error(`        and click 'Power On' (DNS restores within 1-2 minutes).`);
-            console.error(`  2. The service was deleted, trial expired, or service was recreated with a new hostname.`);
-            console.error(`     -> Fix: Copy the active Service URI / Host from Aiven Console Overview tab,`);
-            console.error(`        and update the Render environment variables (PRIMARY_DB_HOST, etc.).`);
+            console.error(`[DB Router] Possible reasons:`);
+            console.error(`  1. The database service is POWERED OFF / STOPPED.`);
+            console.error(`     -> DNS records may be removed for powered-off cloud services.`);
+            console.error(`     -> Fix: Ensure your database service is running.`);
+            console.error(`  2. The service was recreated or has a new hostname.`);
+            console.error(`     -> Fix: Verify host and port in environment variables.`);
             console.error(`================================================================================\n`);
             throw new Error(`getaddrinfo ${dnsCheck.error} ${primaryHost}`);
         } else {

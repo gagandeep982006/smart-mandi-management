@@ -17,12 +17,15 @@ export default function LoginPage() {
     const { user, requestOtp, verifyOtp } = useAuth();
     const navigate = useNavigate();
 
-    // OTP states
-    const [step, setStep] = useState(1); // 1: phone, 2: OTP
+    const [step, setStep] = useState(1); 
     const [phone, setPhone] = useState("");
     const [otp, setOtp] = useState("");
-    const [timer, setTimer] = useState(300); // 5 minutes in seconds
+    const [timer, setTimer] = useState(300); 
     const [canResend, setCanResend] = useState(false);
+    const [cooldownSeconds, setCooldownSeconds] = useState(0);
+    const [remainingAttempts, setRemainingAttempts] = useState(null);
+    const [maxAttempts, setMaxAttempts] = useState(null);
+    const [isLocked, setIsLocked] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -33,7 +36,6 @@ export default function LoginPage() {
         }
     }, [user, navigate]);
 
-    // Timer countdown for Step 2
     useEffect(() => {
         let interval = null;
         if (step === 2 && timer > 0) {
@@ -46,9 +48,25 @@ export default function LoginPage() {
         return () => clearInterval(interval);
     }, [step, timer]);
 
-    // Step 1: Request OTP
+    useEffect(() => {
+        let interval = null;
+        if (cooldownSeconds > 0) {
+            interval = setInterval(() => {
+                setCooldownSeconds((prev) => {
+                    if (prev <= 1) {
+                        setIsLocked(false);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [cooldownSeconds]);
+
     const handleRequestOtp = async (e) => {
         e.preventDefault();
+        if (cooldownSeconds > 0) return;
         setError("");
 
         const cleanPhone = phone.trim().replace(/\D/g, "");
@@ -64,6 +82,8 @@ export default function LoginPage() {
                 setStep(2);
                 setTimer(300);
                 setCanResend(false);
+                if (res.remaining_attempts !== undefined) setRemainingAttempts(res.remaining_attempts);
+                if (res.max_attempts !== undefined) setMaxAttempts(res.max_attempts);
                 const mockOtp = res.otp || res.mock_otp || res.data?.otp;
                 if (mockOtp) {
                     setOtp(String(mockOtp));
@@ -72,17 +92,29 @@ export default function LoginPage() {
                 }
             } else {
                 setError(res?.message || "Failed to send OTP. Please verify your registered number.");
+                if (res?.retry_after || res?.cooldown_seconds) {
+                    setCooldownSeconds(res.cooldown_seconds || res.retry_after);
+                    setIsLocked(Boolean(res.is_locked));
+                }
             }
         } catch (err) {
+            const errData = err.data;
+            if (errData?.retry_after || errData?.cooldown_seconds) {
+                setCooldownSeconds(errData.cooldown_seconds || errData.retry_after);
+                setIsLocked(Boolean(errData.is_locked));
+            }
+            if (errData?.remaining_attempts !== undefined) {
+                setRemainingAttempts(errData.remaining_attempts);
+            }
             setError(err.message || "Failed to send OTP. Please try again.");
         } finally {
             setLoading(false);
         }
     };
 
-    // Step 2: Verify OTP
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
+        if (isLocked || cooldownSeconds > 0) return;
         setError("");
 
         const cleanOtp = otp.trim();
@@ -97,15 +129,26 @@ export default function LoginPage() {
             await verifyOtp(cleanPhone, cleanOtp);
             navigate("/dashboard", { replace: true });
         } catch (err) {
+            const errData = err.data;
+            if (errData?.remaining_attempts !== undefined) {
+                setRemainingAttempts(errData.remaining_attempts);
+            }
+            if (errData?.max_attempts !== undefined) {
+                setMaxAttempts(errData.max_attempts);
+            }
+            if (errData?.retry_after || errData?.cooldown_seconds) {
+                setCooldownSeconds(errData.cooldown_seconds || errData.retry_after);
+                setIsLocked(Boolean(errData.is_locked));
+            }
             setError(err.message || "Invalid OTP. Please check and try again.");
         } finally {
             setLoading(false);
         }
     };
 
-    // Resend OTP
     const handleResendOtp = async () => {
         if (!canResend && timer > 270) return;
+        if (cooldownSeconds > 0) return;
         setError("");
         setLoading(true);
         try {
@@ -114,6 +157,8 @@ export default function LoginPage() {
             if (res && res.success) {
                 setTimer(300);
                 setCanResend(false);
+                if (res.remaining_attempts !== undefined) setRemainingAttempts(res.remaining_attempts);
+                if (res.max_attempts !== undefined) setMaxAttempts(res.max_attempts);
                 const mockOtp = res.otp || res.mock_otp || res.data?.otp;
                 if (mockOtp) {
                     setOtp(String(mockOtp));
@@ -122,8 +167,20 @@ export default function LoginPage() {
                 }
             } else {
                 setError(res?.message || "Failed to resend OTP");
+                if (res?.retry_after || res?.cooldown_seconds) {
+                    setCooldownSeconds(res.cooldown_seconds || res.retry_after);
+                    setIsLocked(Boolean(res.is_locked));
+                }
             }
         } catch (err) {
+            const errData = err.data;
+            if (errData?.retry_after || errData?.cooldown_seconds) {
+                setCooldownSeconds(errData.cooldown_seconds || errData.retry_after);
+                setIsLocked(Boolean(errData.is_locked));
+            }
+            if (errData?.remaining_attempts !== undefined) {
+                setRemainingAttempts(errData.remaining_attempts);
+            }
             setError(err.message || "Failed to resend OTP");
         } finally {
             setLoading(false);
@@ -155,7 +212,6 @@ export default function LoginPage() {
                 padding: "36px 32px",
                 boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.45)"
             }}>
-                {/* Branding */}
                 <div style={{ textAlign: "center", marginBottom: "24px" }}>
                     <div style={{
                         width: "56px",
@@ -179,7 +235,6 @@ export default function LoginPage() {
                     </p>
                 </div>
 
-                {/* Subtitle */}
                 <div style={{ marginBottom: "18px" }}>
                     <span style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>
                         Payment Officer Login
@@ -189,7 +244,6 @@ export default function LoginPage() {
                     </p>
                 </div>
 
-                {/* Error Banner */}
                 {error && (
                     <div style={{
                         display: "flex",
@@ -208,7 +262,6 @@ export default function LoginPage() {
                     </div>
                 )}
 
-                {/* OTP Mode Form */}
                 {step === 1 ? (
                     <form onSubmit={handleRequestOtp}>
                         <div style={{ marginBottom: "20px" }}>
@@ -260,10 +313,28 @@ export default function LoginPage() {
                             </p>
                         </div>
 
+                        {cooldownSeconds > 0 && (
+                            <div style={{
+                                background: "#fffbeb",
+                                border: "1px solid #fde68a",
+                                color: "#b45309",
+                                padding: "10px 14px",
+                                borderRadius: "8px",
+                                fontSize: "13px",
+                                marginBottom: "16px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px"
+                            }}>
+                                <RefreshCw size={14} />
+                                <span>{isLocked ? "Account locked. Cooldown remaining:" : "Resend cooldown:"} <strong>{formatTimer(cooldownSeconds)}</strong></span>
+                            </div>
+                        )}
+
                         <button
                             type="submit"
                             className="btn btn-primary"
-                            disabled={loading || phone.length !== 10}
+                            disabled={loading || phone.length !== 10 || cooldownSeconds > 0}
                             style={{
                                 width: "100%",
                                 padding: "11px",
@@ -305,7 +376,7 @@ export default function LoginPage() {
                                 <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>+91 {phone}</div>
                             </div>
                             <button
-                                type="button"
+                                type="submit"
                                 onClick={() => {
                                     setStep(1);
                                     setError("");
@@ -367,12 +438,12 @@ export default function LoginPage() {
                                 <button
                                     type="button"
                                     onClick={handleResendOtp}
-                                    disabled={!canResend || loading}
+                                    disabled={!canResend || loading || cooldownSeconds > 0}
                                     style={{
                                         background: "transparent",
                                         border: "none",
-                                        color: canResend ? "#2563eb" : "#94a3b8",
-                                        cursor: canResend ? "pointer" : "not-allowed",
+                                        color: (canResend && cooldownSeconds === 0) ? "#2563eb" : "#94a3b8",
+                                        cursor: (canResend && cooldownSeconds === 0) ? "pointer" : "not-allowed",
                                         fontWeight: 600,
                                         display: "flex",
                                         alignItems: "center",
@@ -385,10 +456,56 @@ export default function LoginPage() {
                             </div>
                         </div>
 
+                        {remainingAttempts !== null && (
+                            <div style={{
+                                fontSize: "12px",
+                                fontWeight: 600,
+                                color: remainingAttempts <= 1 ? "#dc2626" : "#4b5563",
+                                marginBottom: "12px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "8px 12px",
+                                background: "#f8fafc",
+                                borderRadius: "8px",
+                                border: "1px solid #e2e8f0"
+                            }}>
+                                <span>Remaining Verification Attempts:</span>
+                                <span style={{
+                                    background: remainingAttempts <= 1 ? "#fee2e2" : "#e0f2fe",
+                                    color: remainingAttempts <= 1 ? "#b91c1c" : "#0369a1",
+                                    padding: "2px 8px",
+                                    borderRadius: "12px",
+                                    fontSize: "12px",
+                                    fontWeight: 700
+                                }}>
+                                    {remainingAttempts} {maxAttempts ? `/ ${maxAttempts}` : ""}
+                                </span>
+                            </div>
+                        )}
+
+                        {cooldownSeconds > 0 && (
+                            <div style={{
+                                background: "#fee2e2",
+                                border: "1px solid #fecaca",
+                                color: "#b91c1c",
+                                padding: "10px 14px",
+                                borderRadius: "8px",
+                                fontSize: "13px",
+                                marginBottom: "16px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px"
+                            }}>
+                                <AlertCircle size={15} />
+                                <span>Account locked. Cooldown remaining: <strong>{formatTimer(cooldownSeconds)}</strong></span>
+                            </div>
+                        )}
+
                         <button
                             type="submit"
                             className="btn btn-primary"
-                            disabled={loading || otp.length !== 6}
+                            disabled={loading || otp.length !== 6 || cooldownSeconds > 0}
                             style={{
                                 width: "100%",
                                 padding: "11px",
@@ -415,7 +532,6 @@ export default function LoginPage() {
                     </form>
                 )}
 
-                {/* Security Footnote */}
                 <div style={{
                     marginTop: "24px",
                     paddingTop: "16px",

@@ -14,11 +14,10 @@ const {
     recordSuccessfulVerification
 } = require("../services/securityStore");
 
-// Helper function to convert JWT expiration string into milliseconds for cookie maxAge
 const parseExpiryToMs = (expiry) => {
     if (typeof expiry === "number") return expiry * 1000;
     const match = String(expiry).match(/^(\d+)([smhd])$/);
-    if (!match) return 60 * 60 * 1000; // default 1 hour
+    if (!match) return 60 * 60 * 1000; 
     const val = parseInt(match[1], 10);
     switch (match[2]) {
         case "s": return val * 1000;
@@ -105,20 +104,30 @@ const requestOtp = async (req, res) => {
             });
         }
 
-        // Check in-memory security store for lockouts, 5-minute cooldown, and rate limits
         const allowedCheck = checkOtpRequestAllowed(cleanPhone, clientIp);
         if (!allowedCheck.allowed) {
+            const isLockout = allowedCheck.reason === "PHONE_LOCKED_OUT" || allowedCheck.reason === "IP_LOCKED_OUT";
+            const isCooldown = allowedCheck.reason === "COOLDOWN";
+            let msg = "Too many requests. Please try again later.";
+            if (isLockout) {
+                msg = `Account is locked. Cooldown remaining: ${Math.ceil(allowedCheck.retryAfterSeconds / 60)} minute(s).`;
+            } else if (isCooldown) {
+                msg = `Please wait ${allowedCheck.retryAfterSeconds} second(s) before requesting a new OTP.`;
+            }
             return res.status(429).json({
                 success: false,
-                message: "Too many requests. Please try again later.",
-                retry_after: allowedCheck.retryAfterSeconds
+                message: msg,
+                retry_after: allowedCheck.retryAfterSeconds,
+                cooldown_seconds: allowedCheck.retryAfterSeconds,
+                remaining_attempts: isLockout ? 0 : undefined,
+                is_locked: isLockout,
+                is_cooldown: isCooldown
             });
         }
 
         const readDb = getReadDatabase().promise();
         const writeDb = getWriteDatabase().promise();
 
-        // Check mandiuserdetails and mandi_users
         const [users] = await readDb.query(
             `SELECT mud.user_id, mud.phone_number, mud.full_name, mu.username, mu.role, mu.mandi_id, mu.status
              FROM mandiuserdetails mud
@@ -144,13 +153,11 @@ const requestOtp = async (req, res) => {
             });
         }
 
-        // Invalidate previous active OTPs
         await writeDb.query(
             `DELETE FROM mandi_login_otp WHERE user_id = ? AND (verified = 0 OR expires_at < NOW())`,
             [user.user_id]
         );
 
-        // Generate 6-digit OTP
         const otp = crypto.randomInt(100000, 1000000).toString();
         const otpHash = await bcrypt.hash(otp, 10);
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
@@ -161,21 +168,17 @@ const requestOtp = async (req, res) => {
             [user.user_id, otpHash, expiresAt]
         );
 
-        // Record successful OTP generation to enforce resend cooldown & rate limits
         recordOtpRequest(cleanPhone, clientIp);
 
-        // Report missing SMS integration clearly in console(for developer mode only)
-        if(process.env.NODE_ENV !== "production"){
-            console.log("\n========================================================");
-            console.log(`🔑 [DEV ONLY] Mandi Portal OTP for mobile ${cleanPhone}: >>> ${otp} <<<`);
-            console.log("========================================================\n");
-        }
-
+        const maxAttempts = parseInt(process.env.LOGIN_MAX_FAILED_ATTEMPTS, 10) || 5;
         return res.status(200).json({
             success: true,
             message: "OTP sent successfully to your registered mobile number",
             phone_number: cleanPhone,
-            otp:otp
+            max_attempts: maxAttempts,
+            remaining_attempts: maxAttempts,
+            resend_cooldown: 5 * 60,
+            otp: otp
         });
     } catch (error) {
         console.error("requestOtp error:", error);
@@ -216,13 +219,15 @@ const verifyOtp = async (req, res) => {
             });
         }
 
-        // Pre-check: Reject immediately if phone or IP is currently locked out
         const verifyAllowed = checkVerificationAllowed(cleanPhone, clientIp);
         if (!verifyAllowed.allowed) {
             return res.status(429).json({
                 success: false,
-                message: "Too many requests. Please try again later.",
-                retry_after: verifyAllowed.retryAfterSeconds
+                message: `Account is locked due to multiple failed attempts. Cooldown remaining: ${Math.ceil(verifyAllowed.retryAfterSeconds / 60)} minute(s).`,
+                retry_after: verifyAllowed.retryAfterSeconds,
+                cooldown_seconds: verifyAllowed.retryAfterSeconds,
+                remaining_attempts: 0,
+                is_locked: true
             });
         }
 
@@ -263,7 +268,6 @@ const verifyOtp = async (req, res) => {
 
         const maxAttempts = parseInt(process.env.LOGIN_MAX_FAILED_ATTEMPTS, 10) || 5;
 
-        // Fetch latest OTP
         const [otps] = await readDb.query(
             `SELECT otp_id, otp_hash, expires_at, attempts, verified
              FROM mandi_login_otp
@@ -283,7 +287,6 @@ const verifyOtp = async (req, res) => {
         const otpRecord = otps[0];
         const now = new Date();
 
-        // Check if this is a duplicate request of an already-verified valid OTP
         if (otpRecord.verified === 1) {
             const isMatch = await bcrypt.compare(cleanOtp, otpRecord.otp_hash);
             if (isMatch && now <= new Date(otpRecord.expires_at)) {
@@ -370,8 +373,12 @@ const verifyOtp = async (req, res) => {
             const failResult = recordFailedVerification(cleanPhone, clientIp);
             return res.status(429).json({
                 success: false,
-                message: "Too many requests. Please try again later.",
-                retry_after: failResult.retryAfterSeconds
+                message: `Maximum attempts reached. Account is locked for ${Math.ceil(failResult.retryAfterSeconds / 60)} minute(s).`,
+                retry_after: failResult.retryAfterSeconds,
+                cooldown_seconds: failResult.retryAfterSeconds,
+                remaining_attempts: 0,
+                max_attempts: maxAttempts,
+                is_locked: true
             });
         }
 
@@ -385,26 +392,29 @@ const verifyOtp = async (req, res) => {
             if (failResult.isLockedOut) {
                 return res.status(429).json({
                     success: false,
-                    message: "Too many requests. Please try again later.",
-                    retry_after: failResult.retryAfterSeconds
+                    message: `Maximum OTP verification attempts reached. Account is locked for ${Math.ceil(failResult.retryAfterSeconds / 60)} minute(s).`,
+                    retry_after: failResult.retryAfterSeconds,
+                    cooldown_seconds: failResult.retryAfterSeconds,
+                    remaining_attempts: 0,
+                    max_attempts: maxAttempts,
+                    is_locked: true
                 });
             }
             return res.status(400).json({
                 success: false,
-                message: "Unable to verify the OTP. Please check the code and try again."
+                message: `Invalid OTP. ${failResult.remainingAttempts} attempt(s) remaining.`,
+                remaining_attempts: failResult.remainingAttempts,
+                max_attempts: maxAttempts
             });
         }
 
-        // Mark OTP as verified
         await writeDb.query(
             `UPDATE mandi_login_otp SET verified = 1 WHERE otp_id = ?`,
             [otpRecord.otp_id]
         );
 
-        // Reset failed verification count for this phone upon successful authentication
         recordSuccessfulVerification(cleanPhone, clientIp);
 
-        // Parse permissions
         let rawPermissions;
         try {
             rawPermissions = typeof user.permissions === "string"
@@ -420,7 +430,6 @@ const verifyOtp = async (req, res) => {
         const normalized = rawPermissions.map(p => (p === "create" ? "write" : p));
         const permissions = [...new Set(normalized.filter(p => VALID_PERMISSIONS.includes(p)))];
 
-        // Fetch counter IDs
         const [counters] = await readDb.query(
             `SELECT counter_id
              FROM mandi_user_counters
@@ -431,7 +440,6 @@ const verifyOtp = async (req, res) => {
 
         const counter_ids = counters.map(row => Number(row.counter_id));
 
-        // Create JWT & cookie
         const jwtExpiry = process.env.JWT_EXPIRES_IN || "1h";
         const token = jwt.sign(
             {
@@ -457,7 +465,6 @@ const verifyOtp = async (req, res) => {
             maxAge: cookieMaxAge
         });
 
-        // Mongo log
         try {
             await MandiLoginLogs.create({
                 user_id: user.user_id,
@@ -501,7 +508,6 @@ const getProfile = async (req, res) => {
 
         const readDb = getReadDatabase().promise();
 
-        // 1. Fetch user + mandi info
         const [rows] = await readDb.query(
             `SELECT 
                 mu.user_id,
@@ -539,7 +545,6 @@ const getProfile = async (req, res) => {
 
         const user = rows[0];
 
-        // 2. Fetch assigned counters
         const [counters] = await readDb.query(
             `SELECT mc.counter_id, mc.counter_number, mc.counter_name, c.crop_name
              FROM mandi_user_counters muc

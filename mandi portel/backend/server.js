@@ -4,7 +4,6 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
 
-// 1. Load dotenv
 dotenv.config({
     path: path.resolve(__dirname, ".env")
 });
@@ -12,17 +11,13 @@ dotenv.config({
 const { validateSecurityConfig } = require("./services/securityStore");
 validateSecurityConfig();
 
-// 2. Create Express app
 const app = express();
 app.set("trust proxy", 1);
 
-// 3. Configure express.json()
 app.use(express.json());
 
-// 4. Configure cookie-parser
 app.use(cookieParser());
 
-// 5. Configure CORS
 const parseAllowedOrigins = () => {
     const defaultOrigins = [
         "http://localhost:3000",
@@ -64,11 +59,9 @@ app.use(
     })
 );
 
-// Database Readiness State Tracking
 let isDatabaseReady = false;
 let databaseInitError = null;
 
-// Health check endpoints (accessible regardless of DB state)
 app.get(["/health", "/api/health"], (req, res) => {
     if (isDatabaseReady) {
         return res.status(200).json({
@@ -88,8 +81,6 @@ app.get(["/health", "/api/health"], (req, res) => {
     });
 });
 
-// Guard middleware for database-dependent API routes:
-// Rejects requests with 503 instead of failing silently when database is unavailable.
 app.use("/api", (req, res, next) => {
     if (req.path === "/health" || req.path === "/status") {
         return next();
@@ -99,15 +90,13 @@ app.use("/api", (req, res, next) => {
         return res.status(503).json({
             success: false,
             error: "DATABASE_UNAVAILABLE",
-            message: "Database connection is not available. Please verify Aiven MySQL status and environment variables.",
-            details: databaseInitError ? databaseInitError.message : "Database initialization pending"
+            message: "Database is down. Please try again later."
         });
     }
 
     next();
 });
 
-// 6. Register routes
 const authRoutes = require("./routes/authRoutes");
 const mandiRoutes = require("./routes/mandiRoutes");
 const counterRoutes = require("./routes/counterRoutes");
@@ -123,7 +112,6 @@ app.use("/api/tokens", tokenRoutes);
 app.use("/api/payments", paymentRoutes);
 app.get("/api/recent-logs", authenticateToken, getRecentLogs);
 
-// Global error handler
 app.use((err, req, res, next) => {
     console.error("Unhandled error:", err.message);
     res.status(500).json({
@@ -132,7 +120,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 7. Initialize services and start server
 const { initDatabaseRouter, verifyDatabaseConnections } = require("./services/databaserouter");
 const { initializeDatabase } = require("./services/databaseInitializer");
 const connectMongoDB = require("./services/mongoConnection");
@@ -140,7 +127,6 @@ const { initHistoryCleanupScheduler } = require("./services/historyCleanupServic
 
 const PORT = process.env.PORT || 5001;
 
-// Start Express and bind to port immediately as required by Render
 const server = app.listen(PORT, () => {
     console.log(`====================================================`);
     console.log(` Mandi Portal Backend running on port ${PORT}`);
@@ -160,12 +146,10 @@ async function initBackendServices() {
         console.log("[Startup] Verifying Mandi Portal Operational Tables...");
         await initializeDatabase();
 
-        // Mark database as successfully ready to accept traffic
         isDatabaseReady = true;
         databaseInitError = null;
         console.log("[Startup] ✓ Database is ready and operational.\n");
 
-        // Connect to MongoDB for operational history
         try {
             await connectMongoDB();
             initHistoryCleanupScheduler();
@@ -183,7 +167,6 @@ async function initBackendServices() {
     }
 }
 
-// Run async initialization
 initBackendServices();
 
 module.exports = { app, server };

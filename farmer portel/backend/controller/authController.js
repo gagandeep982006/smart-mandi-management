@@ -33,7 +33,6 @@ const requestOtp = async (req, res) => {
         const rawMobile = req.body.phone_number || req.body.mobile;
         const aadhaar = req.body.aadhaar;
 
-        // 1 & 2. Validate input format
         if (!isValidAadhaar(aadhaar) || !isValidMobile(rawMobile)) {
             return res.status(400).json({
                 success: false,
@@ -51,17 +50,27 @@ const requestOtp = async (req, res) => {
             });
         }
 
-        // Check in-memory security store for lockouts, 5-minute cooldown, and rate limits
         const allowedCheck = checkOtpRequestAllowed(cleanMobile, clientIp);
         if (!allowedCheck.allowed) {
+            const isLockout = allowedCheck.reason === "PHONE_LOCKED_OUT" || allowedCheck.reason === "IP_LOCKED_OUT";
+            const isCooldown = allowedCheck.reason === "COOLDOWN";
+            let msg = "Too many requests. Please try again later.";
+            if (isLockout) {
+                msg = `Account is locked. Cooldown remaining: ${Math.ceil(allowedCheck.retryAfterSeconds / 60)} minute(s).`;
+            } else if (isCooldown) {
+                msg = `Please wait ${allowedCheck.retryAfterSeconds} second(s) before requesting a new OTP.`;
+            }
             return res.status(429).json({
                 success: false,
-                message: "Too many requests. Please try again later.",
-                retry_after: allowedCheck.retryAfterSeconds
+                message: msg,
+                retry_after: allowedCheck.retryAfterSeconds,
+                cooldown_seconds: allowedCheck.retryAfterSeconds,
+                remaining_attempts: isLockout ? 0 : undefined,
+                is_locked: isLockout,
+                is_cooldown: isCooldown
             });
         }
 
-        // 3. Find farmer using mobile number using read replica/database
         const readDb = getReadDatabase().promise();
         const [farmers] = await readDb.query(
             "SELECT farmer_id, name, mobile_number, aadhaar_hash, aadhaar_lookup, status FROM farmer WHERE mobile_number = ?",
@@ -78,7 +87,6 @@ const requestOtp = async (req, res) => {
 
         const farmer = farmers[0];
 
-        // Check account status if schema supports it
         if (farmer.status && farmer.status !== "active") {
             recordOtpRequest(cleanMobile, clientIp);
             return res.status(403).json({
@@ -87,7 +95,6 @@ const requestOtp = async (req, res) => {
             });
         }
 
-        // 4 & 5. Verify entered Aadhaar against farmer.aadhaar_lookup using HMAC-SHA256
         const aadhaarPepper = process.env.AADHAAR_PEPPER;
         if (!aadhaarPepper) {
             console.error("[CRITICAL CONFIG ERROR] AADHAAR_PEPPER is not configured.");
@@ -114,37 +121,28 @@ const requestOtp = async (req, res) => {
             });
         }
 
-        // 8. Generate 6-digit OTP
         const otp = crypto.randomInt(100000, 1000000).toString();
 
-        // 9. Store ONLY hashed OTP in MySQL
         const otpHash = await bcrypt.hash(otp, 10);
 
-        // 10. Short expiry (5 minutes)
         const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
-        // Store OTP in PRIMARY database
         const writeDb = getWriteDatabase().promise();
         await writeDb.query(
             "INSERT INTO farmer_login_otp (farmer_id, otp_hash, expires_at, attempts, verified) VALUES (?, ?, ?, 0, FALSE)",
             [farmer.farmer_id, otpHash, expiresAt]
         );
 
-        // Record successful OTP generation to enforce resend cooldown & rate limits
         recordOtpRequest(cleanMobile, clientIp);
 
-        // 12. Send OTP to registered mobile number (development logging only)
-        if(process.env.NODE_ENV !== "production"){
-            console.log("\n========================================================");
-            console.log(`🔑 [DEV ONLY] OTP for mobile ${cleanMobile}: >>> ${otp} <<<`);
-            console.log("========================================================\n");
-        }
-
-        // Return success response without exposing OTP, Aadhaar, hash, or JWT
+        const maxAttempts = getSecurityMaxAttempts();
         return res.status(200).json({
             success: true,
             message: "OTP sent successfully",
-            otp:otp
+            max_attempts: maxAttempts,
+            remaining_attempts: maxAttempts,
+            resend_cooldown: 5 * 60,
+            otp: otp
         });
     } catch (error) {
         console.error("Error in requestOtp:", error);
@@ -162,7 +160,6 @@ const verifyOtp = async (req, res) => {
         const aadhaar = req.body.aadhaar;
         const otp = req.body.otp;
 
-        // 1. Validate input
         if (!aadhaar || !rawMobile || !otp) {
             return res.status(400).json({
                 success: false,
@@ -188,17 +185,18 @@ const verifyOtp = async (req, res) => {
             });
         }
 
-        // Pre-check: Reject immediately if phone or IP is currently locked out
         const verifyAllowed = checkVerificationAllowed(cleanMobile, clientIp);
         if (!verifyAllowed.allowed) {
             return res.status(429).json({
                 success: false,
-                message: "Too many requests. Please try again later.",
-                retry_after: verifyAllowed.retryAfterSeconds
+                message: `Account is locked due to multiple failed attempts. Cooldown remaining: ${Math.ceil(verifyAllowed.retryAfterSeconds / 60)} minute(s).`,
+                retry_after: verifyAllowed.retryAfterSeconds,
+                cooldown_seconds: verifyAllowed.retryAfterSeconds,
+                remaining_attempts: 0,
+                is_locked: true
             });
         }
 
-        // 2 & 3. Find farmer and verify Aadhaar using PRIMARY database
         const writeDb = getWriteDatabase().promise();
         const [farmers] = await writeDb.query(
             "SELECT farmer_id, name, mobile_number, aadhaar_hash, aadhaar_lookup, status FROM farmer WHERE mobile_number = ?",
@@ -262,7 +260,6 @@ const verifyOtp = async (req, res) => {
             });
         }
 
-        // 4. Retrieve latest OTP for this farmer from PRIMARY
         const [otpRecords] = await writeDb.query(
             "SELECT otp_id, farmer_id, otp_hash, expires_at, attempts, verified FROM farmer_login_otp WHERE farmer_id = ? ORDER BY otp_id DESC LIMIT 1",
             [farmer.farmer_id]
@@ -279,7 +276,6 @@ const verifyOtp = async (req, res) => {
         const now = new Date();
         const maxAttempts = getSecurityMaxAttempts();
 
-        // Check if this is a duplicate request of an already-verified valid OTP
         if (otpRecord.verified) {
             const isOtpMatch = await bcrypt.compare(cleanOtp, otpRecord.otp_hash);
             if (isOtpMatch && now < new Date(otpRecord.expires_at)) {
@@ -319,7 +315,6 @@ const verifyOtp = async (req, res) => {
             });
         }
 
-        // 5. Check expiry
         if (new Date(otpRecord.expires_at) < now) {
             return res.status(400).json({
                 success: false,
@@ -327,20 +322,21 @@ const verifyOtp = async (req, res) => {
             });
         }
 
-        // 6. Check maximum attempts
         if (otpRecord.attempts >= maxAttempts) {
             const failResult = recordFailedVerification(cleanMobile, clientIp);
             return res.status(429).json({
                 success: false,
-                message: "Too many requests. Please try again later.",
-                retry_after: failResult.retryAfterSeconds
+                message: `Maximum attempts reached. Account is locked for ${Math.ceil(failResult.retryAfterSeconds / 60)} minute(s).`,
+                retry_after: failResult.retryAfterSeconds,
+                cooldown_seconds: failResult.retryAfterSeconds,
+                remaining_attempts: 0,
+                max_attempts: maxAttempts,
+                is_locked: true
             });
         }
 
-        // 7. Compare entered OTP with stored OTP hash
         const isOtpMatch = await bcrypt.compare(cleanOtp, otpRecord.otp_hash);
 
-        // 8. If wrong: increment attempts and do not authenticate
         if (!isOtpMatch) {
             const nextAttempts = otpRecord.attempts + 1;
             await writeDb.query(
@@ -352,26 +348,29 @@ const verifyOtp = async (req, res) => {
             if (failResult.isLockedOut) {
                 return res.status(429).json({
                     success: false,
-                    message: "Too many requests. Please try again later.",
-                    retry_after: failResult.retryAfterSeconds
+                    message: `Maximum OTP verification attempts reached. Account is locked for ${Math.ceil(failResult.retryAfterSeconds / 60)} minute(s).`,
+                    retry_after: failResult.retryAfterSeconds,
+                    cooldown_seconds: failResult.retryAfterSeconds,
+                    remaining_attempts: 0,
+                    max_attempts: maxAttempts,
+                    is_locked: true
                 });
             }
             return res.status(400).json({
                 success: false,
-                message: "Unable to verify the OTP. Please check the code and try again."
+                message: `Invalid OTP. ${failResult.remainingAttempts} attempt(s) remaining.`,
+                remaining_attempts: failResult.remainingAttempts,
+                max_attempts: maxAttempts
             });
         }
 
-        // 9. If correct: mark OTP as verified so it cannot be reused
         await writeDb.query(
             "UPDATE farmer_login_otp SET verified = TRUE WHERE otp_id = ?",
             [otpRecord.otp_id]
         );
 
-        // Reset failed verification count for this phone upon successful authentication
         recordSuccessfulVerification(cleanMobile, clientIp);
 
-        // 10. Check farmer verification requirement before issuing login credentials
         const [verifyRows] = await writeDb.query(
             `SELECT f.farmer_id, f.status, f.mobile_verified, f.verification_status AS farmer_verified,
                     COALESCE(b.verification_status, 0) AS bank_verified
@@ -413,14 +412,12 @@ const verifyOtp = async (req, res) => {
             });
         }
 
-        // Create JWT containing only the minimum required farmer_id payload
         const token = jwt.sign(
             { farmer_id: farmer.farmer_id },
             process.env.JWT_SECRET,
             { expiresIn: "24h" }
         );
 
-        // Store JWT in HttpOnly cookie named token (and farmer_token for compatibility)
         const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
         const isProduction = process.env.NODE_ENV === "production";
         const useSecure = Boolean(isProduction && isHttps);
@@ -435,7 +432,6 @@ const verifyOtp = async (req, res) => {
         res.cookie("token", token, cookieOptions);
         res.cookie("farmer_token", token, cookieOptions);
 
-        // Return successful login response without exposing JWT or Aadhaar in body
         return res.status(200).json({
             success: true,
             message: "Login successful",
