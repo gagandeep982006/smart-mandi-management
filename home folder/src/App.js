@@ -295,12 +295,6 @@ export default function App() {
                   >
                     <IconComponent size={28} />
                   </div>
-                  <div 
-                    className="port-pill"
-                    style={{ background: portal.accentBg, color: portal.badgeColor }}
-                  >
-                    PORT {portal.defaultPort}
-                  </div>
                 </div>
 
                 <div 
@@ -406,99 +400,6 @@ export default function App() {
           </div>
         </section>
       </main>
-
-      {/* Port Configuration Modal */}
-      {showConfigModal && (
-        <div className="modal-overlay" onClick={() => setShowConfigModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Configure Portal URLs & Ports</h3>
-              <button 
-                onClick={() => setShowConfigModal(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.25rem' }}>
-              Modify the target URLs if your services run on custom ports, Docker containers, or remote network hosts:
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.75rem' }}>
-              {portals.map(p => (
-                <div key={p.id}>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.35rem', color: '#334155' }}>
-                    {p.name} (Default: Port {p.defaultPort})
-                  </label>
-                  <input 
-                    type="text"
-                    value={tempUrls[p.id] || ''}
-                    onChange={(e) => setTempUrls({ ...tempUrls, [p.id]: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.9rem',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border)',
-                      fontSize: '0.875rem',
-                      fontFamily: 'monospace'
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <button 
-                onClick={resetConfig}
-                style={{
-                  background: 'none',
-                  border: '1px solid var(--border)',
-                  padding: '0.6rem 1rem',
-                  borderRadius: '8px',
-                  fontSize: '0.825rem',
-                  cursor: 'pointer',
-                  color: '#64748b'
-                }}
-              >
-                Reset Defaults
-              </button>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button 
-                  onClick={() => setShowConfigModal(false)}
-                  style={{
-                    background: '#f1f5f9',
-                    border: 'none',
-                    padding: '0.6rem 1.1rem',
-                    borderRadius: '8px',
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    color: '#334155',
-                    fontWeight: 600
-                  }}
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={saveConfig}
-                  style={{
-                    background: 'var(--primary)',
-                    border: 'none',
-                    padding: '0.6rem 1.25rem',
-                    borderRadius: '8px',
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    color: 'white',
-                    fontWeight: 700
-                  }}
-                >
-                  Save Configuration
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Footer */}
       <footer className="footer-wrap">
