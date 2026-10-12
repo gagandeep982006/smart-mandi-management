@@ -64,6 +64,49 @@ app.use(
     })
 );
 
+// Database Readiness State Tracking
+let isDatabaseReady = false;
+let databaseInitError = null;
+
+// Health check endpoints (accessible regardless of DB state)
+app.get(["/health", "/api/health"], (req, res) => {
+    if (isDatabaseReady) {
+        return res.status(200).json({
+            status: "OK",
+            service: "Mandi Portal Backend",
+            database: "CONNECTED",
+            timestamp: new Date().toISOString()
+        });
+    }
+
+    return res.status(503).json({
+        status: "UNAVAILABLE",
+        service: "Mandi Portal Backend",
+        database: "DISCONNECTED",
+        error: databaseInitError ? databaseInitError.message : "Database initialization pending",
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Guard middleware for database-dependent API routes:
+// Rejects requests with 503 instead of failing silently when database is unavailable.
+app.use("/api", (req, res, next) => {
+    if (req.path === "/health" || req.path === "/status") {
+        return next();
+    }
+
+    if (!isDatabaseReady) {
+        return res.status(503).json({
+            success: false,
+            error: "DATABASE_UNAVAILABLE",
+            message: "Database connection is not available. Please verify Aiven MySQL status and environment variables.",
+            details: databaseInitError ? databaseInitError.message : "Database initialization pending"
+        });
+    }
+
+    next();
+});
+
 // 6. Register routes
 const authRoutes = require("./routes/authRoutes");
 const mandiRoutes = require("./routes/mandiRoutes");
@@ -79,11 +122,6 @@ app.use("/api/counters", counterRoutes);
 app.use("/api/tokens", tokenRoutes);
 app.use("/api/payments", paymentRoutes);
 app.get("/api/recent-logs", authenticateToken, getRecentLogs);
-
-// Health check endpoint
-app.get("/health", (req, res) => {
-    res.status(200).json({ status: "OK", service: "Mandi Portal Backend" });
-});
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -102,31 +140,50 @@ const { initHistoryCleanupScheduler } = require("./services/historyCleanupServic
 
 const PORT = process.env.PORT || 5001;
 
-async function startServer() {
+// Start Express and bind to port immediately as required by Render
+const server = app.listen(PORT, () => {
+    console.log(`====================================================`);
+    console.log(` Mandi Portal Backend running on port ${PORT}`);
+    console.log(` Environment: ${process.env.NODE_ENV || "development"}`);
+    console.log(` Health check: http://localhost:${PORT}/health`);
+    console.log(`====================================================`);
+});
+
+async function initBackendServices() {
     try {
-        // Initialize MySQL database router/connections
+        console.log("\n[Startup] Initializing MySQL Database Router...");
         initDatabaseRouter();
 
-        // Verify MySQL connection pools
+        console.log("[Startup] Verifying MySQL Connection Pools...");
         await verifyDatabaseConnections();
 
-        // Automatically initialize operational tables, indexes, and views
+        console.log("[Startup] Verifying Mandi Portal Operational Tables...");
         await initializeDatabase();
 
-        // Connect to MongoDB
-        await connectMongoDB();
+        // Mark database as successfully ready to accept traffic
+        isDatabaseReady = true;
+        databaseInitError = null;
+        console.log("[Startup] ✓ Database is ready and operational.\n");
 
-        // Initialize Procurement Session History Cleanup Scheduler (every 1 hour)
-        initHistoryCleanupScheduler();
-
-        // Express listens only after DB initialization succeeds
-        app.listen(PORT, () => {
-            console.log(`Mandi Portal Backend running on port ${PORT}`);
-        });
+        // Connect to MongoDB for operational history
+        try {
+            await connectMongoDB();
+            initHistoryCleanupScheduler();
+        } catch (mongoErr) {
+            console.warn("[Startup] MongoDB connection warning:", mongoErr.message);
+        }
     } catch (error) {
-        console.error("Server startup aborted due to initialization failure:", error.message);
-        process.exit(1);
+        isDatabaseReady = false;
+        databaseInitError = error;
+        console.error("\n====================================================");
+        console.error(" [CRITICAL] Database initialization failed during startup:");
+        console.error(" Error:", error.message);
+        console.error(" Status: Port is bound to prevent Render crash, but API routes will return 503 until database is reachable.");
+        console.error("====================================================\n");
     }
 }
 
-startServer();
+// Run async initialization
+initBackendServices();
+
+module.exports = { app, server };

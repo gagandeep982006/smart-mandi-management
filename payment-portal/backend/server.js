@@ -60,14 +60,45 @@ app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
+// Database Readiness State
+let isDatabaseReady = false;
+let databaseInitError = null;
+
 // 3. Health Check
-app.get("/api/health", (req, res) => {
-    res.status(200).json({
-        status: "OK",
+app.get(["/health", "/api/health"], (req, res) => {
+    if (isDatabaseReady) {
+        return res.status(200).json({
+            status: "OK",
+            service: "Payment Portal Backend",
+            database: "CONNECTED",
+            port: PORT,
+            timestamp: new Date().toISOString()
+        });
+    }
+
+    return res.status(503).json({
+        status: "UNAVAILABLE",
         service: "Payment Portal Backend",
+        database: "DISCONNECTED",
+        error: databaseInitError ? databaseInitError.message : "Database initialization pending",
         port: PORT,
         timestamp: new Date().toISOString()
     });
+});
+
+// Guard middleware for database-dependent API routes
+app.use("/api", (req, res, next) => {
+    if (req.path === "/health") return next();
+
+    if (!isDatabaseReady) {
+        return res.status(503).json({
+            success: false,
+            error: "DATABASE_UNAVAILABLE",
+            message: "Database connection is not available. Please verify Aiven MySQL status and environment variables.",
+            details: databaseInitError ? databaseInitError.message : "Database initialization pending"
+        });
+    }
+    next();
 });
 
 // 4. API Routes
@@ -95,12 +126,23 @@ app.use((err, req, res, next) => {
 });
 
 // 7. Start Server and Initialize Database Connections
-async function startServer() {
+const server = app.listen(PORT, () => {
+    console.log(`====================================================`);
+    console.log(` Payment Portal Backend running on http://localhost:${PORT}`);
+    console.log(` Primary/Secondary MySQL Topology Active`);
+    console.log(`====================================================`);
+});
+
+async function initBackendServices() {
     try {
         // Connect MongoDB for Audit Logs
-        const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/farmer_history";
-        await mongoose.connect(mongoUri);
-        console.log("[MongoDB] Connected successfully for Payment Portal audit logs.");
+        try {
+            const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/farmer_history";
+            await mongoose.connect(mongoUri);
+            console.log("[MongoDB] Connected successfully for Payment Portal audit logs.");
+        } catch (mongoErr) {
+            console.warn("[MongoDB] Connection warning:", mongoErr.message);
+        }
 
         // Verify MySQL Primary & Secondary DBs
         await verifyDatabaseConnections();
@@ -108,16 +150,18 @@ async function startServer() {
         // Ensure Payment Portal tables exist on Primary
         await initializePaymentTables();
 
-        app.listen(PORT, () => {
-            console.log(`====================================================`);
-            console.log(` Payment Portal Backend running on http://localhost:${PORT}`);
-            console.log(` Primary/Secondary MySQL Topology Active`);
-            console.log(`====================================================`);
-        });
+        isDatabaseReady = true;
+        databaseInitError = null;
+        console.log("[Payment Portal] Database initialized and ready for requests.\n");
     } catch (err) {
-        console.error("Fatal error during server startup:", err);
-        process.exit(1);
+        isDatabaseReady = false;
+        databaseInitError = err;
+        console.error("\n[CRITICAL STARTUP ERROR] Database initialization failed:");
+        console.error(err.message);
+        console.error("Server remains listening on port " + PORT + " to report health status, but API routes will return 503.\n");
     }
 }
 
-startServer();
+initBackendServices();
+
+module.exports = { app, server };

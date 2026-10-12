@@ -1,21 +1,40 @@
 const mysql = require("mysql2");
 
 function createPool(prefix) {
-    const host = process.env[`${prefix}_HOST`];
-    if (!host) {
+    const rawHost = process.env[`${prefix}_HOST`];
+    if (!rawHost) {
         return null;
     }
 
-    return mysql.createPool({
+    const host = String(rawHost).trim();
+    const port = Number(process.env[`${prefix}_PORT`]) || 3306;
+    const user = process.env[`${prefix}_USER`];
+    const password = process.env[`${prefix}_PASSWORD`];
+    const database = process.env[`${prefix}_NAME`];
+
+    const sslDisabled = process.env[`${prefix}_SSL`] === "false" || process.env.DB_SSL === "false";
+    const ssl = sslDisabled
+        ? undefined
+        : {
+            rejectUnauthorized: process.env[`${prefix}_SSL_REJECT_UNAUTHORIZED`] === "true" || process.env.DB_SSL_REJECT_UNAUTHORIZED === "true"
+        };
+
+    const config = {
         host: host,
-        port: Number(process.env[`${prefix}_PORT`]) || 3306,
-        user: process.env[`${prefix}_USER`],
-        password: process.env[`${prefix}_PASSWORD`],
-        database: process.env[`${prefix}_NAME`],
+        port: port,
+        user: user,
+        password: password,
+        database: database,
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0
-    });
+    };
+
+    if (ssl) {
+        config.ssl = ssl;
+    }
+
+    return mysql.createPool(config);
 }
 
 let primaryDB = null;
