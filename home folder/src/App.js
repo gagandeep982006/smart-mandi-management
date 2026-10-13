@@ -359,7 +359,7 @@ export default function App() {
               <div>
                 <h4 style={{ fontWeight: 800, fontSize: '0.95rem', color: '#15803d' }}>Enterprise Security Architecture Across All 4 Portals</h4>
                 <p style={{ fontSize: '0.825rem', color: '#166534', marginTop: '2px' }}>
-                  All portals share unified server-side in-memory JavaScript Map abuse protection (5-minute OTP cooldown, failed attempt lockout, generic security responses) alongside HttpOnly JWT authentication and cryptographic HMAC-SHA256 Aadhaar hashing.
+                  All portals share unified server-side in-memory JavaScript Map abuse protection (x-minute OTP cooldown, failed attempt lockout, generic security responses) alongside HttpOnly JWT authentication and cryptographic HMAC-SHA256 Aadhaar hashing.
                 </p>
               </div>
             </div>
@@ -411,9 +411,6 @@ export default function App() {
           <p className="footer-credits">
             Ministry of Agriculture & Farmers Welfare • Food, Civil Supplies & Consumer Affairs Department
           </p>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-            Direct Links: Mandi (3000) • Government (3001) • Farmer (3002) • Payment (3004) • Gateway Hub (3005)
-          </div>
         </div>
       </footer>
     </div>
