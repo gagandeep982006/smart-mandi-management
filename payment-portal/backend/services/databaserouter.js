@@ -27,14 +27,20 @@ function createPool(prefix) {
         database: database,
         waitForConnections: true,
         connectionLimit: 10,
-        queueLimit: 0
+        queueLimit: 0,
+        timezone: '+05:30',
+        dateStrings: true
     };
 
     if (ssl) {
         config.ssl = ssl;
     }
 
-    return mysql.createPool(config);
+    const pool = mysql.createPool(config);
+    pool.on('connection', (conn) => {
+        conn.query("SET time_zone = '+05:30'");
+    });
+    return pool;
 }
 
 let primaryDB = null;

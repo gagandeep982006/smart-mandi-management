@@ -22,20 +22,24 @@ function createPool(prefix) {
         database: process.env[`${prefix}_NAME`],
         waitForConnections: true,
         connectionLimit: 10,
-        queueLimit: 0
+        queueLimit: 0,
+        timezone: '+05:30',
+        dateStrings: true
     };
 
     if (ssl) {
         config.ssl = ssl;
     }
 
-    return mysql.createPool(config);
+    const pool = mysql.createPool(config);
+    pool.on('connection', (conn) => {
+        conn.query("SET time_zone = '+05:30'");
+    });
+    return pool;
 }
 
-// PRIMARY
 const primaryDB = createPool("PRIMARY_DB");
 
-// SECONDARIES
 const secondary1DB = createPool("SECONDARY1_DB");
 const secondary2DB = createPool("SECONDARY2_DB");
 const secondary3DB = createPool("SECONDARY3_DB");

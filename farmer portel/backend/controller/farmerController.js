@@ -100,24 +100,17 @@ function getDaysUntilAppointment(appointmentDateInput) {
     return Math.round((appUtc - todUtc) / (1000 * 60 * 60 * 24));
 }
 
-/**
- * Formats a date/datetime/time into Indian Standard Time (12-hour AM/PM format, e.g. "11:10 PM").
- */
 function formatToIndianTime(val) {
     if (!val) return 'N/A';
     if (typeof val === 'string') {
         const trimmed = val.trim();
-        const timeMatch = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+        const timeMatch = trimmed.match(/(?:^|\s|T)(\d{1,2}):(\d{2})(?::(\d{2}))?/);
         if (timeMatch) {
             let h = parseInt(timeMatch[1], 10);
             const m = timeMatch[2];
             const period = h >= 12 ? 'PM' : 'AM';
             h = h % 12 || 12;
             return `${String(h).padStart(2, '0')}:${m} ${period}`;
-        }
-        if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(trimmed)) {
-            const parts = trimmed.split(' ');
-            return formatToIndianTime(parts[1]);
         }
     }
     const d = new Date(val);

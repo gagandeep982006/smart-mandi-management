@@ -83,7 +83,7 @@ function getSlotTimingStatus(bookingTime, serviceDate) {
 
     if (typeof bookingTime === 'string') {
         const trimmed = bookingTime.trim();
-        const m = trimmed.match(/^(\d{1,2}):(\d{2})/);
+        const m = trimmed.match(/(?:^|\s|T)(\d{1,2}):(\d{2})/);
         if (m) {
             bookingHours = parseInt(m[1], 10);
             bookingMinutes = parseInt(m[2], 10);
@@ -115,7 +115,6 @@ function getSlotTimingStatus(bookingTime, serviceDate) {
         }
     }
 
-    // Current time in IST (Asia/Kolkata)
     const now = new Date();
     const istNowDateFormatter = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Kolkata',
